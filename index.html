@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="robots" content="noindex, nofollow">
+<title>LOG LIBRARY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Serif+KR:wght@300;400;500;600;700&family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e0d0c;
+    --panel:#1c1813;
+    --line:#2c2620;
+    --ink:#e9e1cf;
+    --ink-dim:#b3a890;
+    --ink-mute:#7a715f;
+    --accent:#d9c89c;
+    --accent-soft:#c8b685;
+    --field:#0f0d0a;
+    --field-line:#34291f;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'Noto Serif KR','Cormorant Garamond',serif;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 700px at 20% -10%, rgba(120,90,60,.18), transparent 60%),
+      radial-gradient(900px 500px at 90% 110%, rgba(60,40,30,.25), transparent 60%),
+      linear-gradient(180deg,#0a0908 0%, #100e0b 30%, #0c0a08 100%);
+    background-attachment:fixed;
+  }
+  body::after{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .9 0 0 0 0 .85 0 0 0 0 .75 0 0 0 .06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity:.45; mix-blend-mode:overlay;
+  }
+
+  header{position:relative; z-index:2; text-align:center; padding:48px 24px 8px;}
+  header h1{
+    font-family:'Cormorant Garamond', serif; font-weight:500;
+    letter-spacing:.32em; font-size:clamp(34px, 5.6vw, 64px);
+    color:var(--ink); margin:0;
+    text-shadow:0 2px 30px rgba(0,0,0,.6);
+  }
+  .sub-mark{display:none;}
+
+  main{
+    position:relative; z-index:2;
+    display:grid; grid-template-columns: minmax(380px, 1fr) minmax(380px, 1fr);
+    gap:28px; max-width:1500px; margin:0 auto; padding:24px 28px 80px;
+  }
+  @media (max-width: 1100px){ main{grid-template-columns:1fr; padding:16px} }
+
+  .panel{
+    background:linear-gradient(180deg, rgba(28,24,19,.7), rgba(20,17,13,.7));
+    border:1px solid var(--line); border-radius:14px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 10px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,235,200,.04);
+  }
+  .toolbar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 18px; gap:12px; flex-wrap:wrap; border-bottom:1px solid var(--line);
+  }
+  .tabs, .type-toggle{display:inline-flex; background:#0a0907; border:1px solid var(--line); border-radius:999px; padding:4px}
+  .tabs button, .type-toggle button{
+    background:transparent; border:0; color:var(--ink-dim);
+    padding:8px 16px; border-radius:999px; cursor:pointer;
+    font-family:inherit; font-size:13px; letter-spacing:.05em; transition:.2s;
+  }
+  .tabs button.active{background:var(--ink); color:#1a1612; box-shadow:0 2px 10px rgba(0,0,0,.4)}
+  .type-toggle button.active{background:#2c2620; color:var(--ink)}
+  .type-toggle button{font-size:12px; letter-spacing:.12em; padding:8px 14px}
+
+  .section{padding:18px 22px; border-bottom:1px solid var(--line)}
+  .section:last-child{border-bottom:0}
+  .section-title{
+    font-family:'Cormorant Garamond', serif;
+    font-size:15px; letter-spacing:.32em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 14px;
+  }
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  .full{grid-column:1 / -1}
+
+  label{
+    display:block; font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--ink-mute); margin-bottom:6px;
+    font-family:'Cormorant Garamond', serif; font-weight:600;
+  }
+  input[type=text], input[type=url], input[type=number], select, textarea{
+    width:100%; background:var(--field); border:1px solid var(--field-line);
+    color:var(--ink); padding:10px 12px; border-radius:8px;
+    font-family:inherit; font-size:13.5px; outline:none;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  input:focus, select:focus, textarea:focus{
+    border-color:var(--accent-soft);
+    box-shadow:0 0 0 3px rgba(217,200,156,.08);
+  }
+  textarea{min-height:240px; resize:vertical; line-height:1.7; font-size:13.5px}
+  input[type=color]{
+    width:42px; height:30px; padding:0; border:1px solid var(--field-line);
+    background:transparent; border-radius:6px; cursor:pointer;
+  }
+  .color-row{display:flex; align-items:center; gap:10px}
+  .color-row span{font-size:11px; color:var(--ink-mute); letter-spacing:.06em}
+  .check{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-dim); cursor:pointer}
+  .check input{width:16px; height:16px; accent-color:var(--accent)}
+
+  .theme-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px}
+  .theme-chip{
+    padding:9px 8px; border-radius:999px; border:1px solid var(--line);
+    background:#0a0907; color:var(--ink-dim);
+    font-size:12px; letter-spacing:.08em; cursor:pointer; text-align:center;
+    transition:.2s ease;
+  }
+  .theme-chip:hover{border-color:var(--accent-soft); color:var(--ink)}
+  .theme-chip.active{background:var(--ink); color:#1a1612; border-color:var(--ink)}
+
+  /* preview / output */
+  .preview-wrap{padding:18px}
+  .preview-frame{
+    background:#1f1d1a; border-radius:14px; overflow:auto; max-height:680px;
+    border:1px solid var(--line); padding:18px;
+    box-shadow: inset 0 1px 0 rgba(255,235,200,.05), 0 20px 60px rgba(0,0,0,.5);
+  }
+  .output-wrap{padding:0 18px 18px}
+  .output-head{display:flex; justify-content:space-between; align-items:center; margin:6px 0 8px}
+  .output-head strong{
+    font-family:'Cormorant Garamond',serif; letter-spacing:.16em;
+    color:var(--accent); font-weight:500; font-size:13px; text-transform:uppercase;
+  }
+  .copy-btn{
+    background:var(--ink); color:#1a1612; border:0;
+    padding:7px 16px; border-radius:999px; cursor:pointer;
+    font-family:inherit; font-size:12px; letter-spacing:.1em; transition:.2s;
+  }
+  .copy-btn:hover{background:#fff}
+  .copy-btn.copied{background:#a8c89c}
+  .output-code{
+    background:#0a0907; border:1px solid var(--line); border-radius:10px;
+    padding:12px; color:#cfc3a8;
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    font-size:11px; line-height:1.55;
+    max-height:280px; overflow:auto;
+    white-space:pre-wrap; word-break:break-all;
+  }
+  .help{font-size:11px; color:var(--ink-mute); margin-top:8px; line-height:1.6}
+  /* Type-specific field visibility — toggled by body[data-type] */
+  body[data-type="A"] .b-only{ display:none }
+  body[data-type="B"] .a-only{ display:none }
+  .help code{
+    background:#0a0907; border:1px solid var(--line); padding:1px 5px;
+    border-radius:4px; color:var(--accent-soft); font-size:11px;
+  }
+
+  input[type=range]{width:100%; accent-color:var(--accent)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>LOG LIBRARY</h1>
+</header>
+
+<main>
+  <!-- LEFT PANEL -->
+  <section class="panel">
+    <div class="toolbar">
+      <div class="tabs" id="tabs">
+        <button class="active" data-tab="inputs">Inputs</button>
+        <button data-tab="styles">Styles &amp; Presets</button>
+      </div>
+      <div class="type-toggle" id="typeToggle">
+        <button class="active" data-type="A">A TYPE</button>
+        <button data-type="B">B TYPE</button>
+      </div>
+    </div>
+
+    <!-- ========== INPUTS TAB ========== -->
+    <div data-pane="inputs">
+      <div class="section">
+        <h3 class="section-title">Meta</h3>
+        <div class="grid">
+          <div><label>Your Name (by ___)</label><input id="f-author" type="text" value="Your Name" /></div>
+          <div><label>Character Name (영문 표기)</label><input id="f-character" type="text" value="Character Name" /></div>
+          <div><label>Title (hero, 큰 글씨)</label><input id="f-title" type="text" value="Short Story Title" /></div>
+          <div><label>Tags (선택, 쉼표로 구분)</label><input id="f-tags" type="text" placeholder="예: Short Log, Drama" /></div>
+          <div class="b-only"><label>Prompt Name (B 타입)</label><input id="f-prompt" type="text" value="Prompt" placeholder="예: Sonnet v3" /></div>
+          <div class="b-only"><label>Model (B 타입)</label><input id="f-model" type="text" value="Model" placeholder="예: Claude 3.5" /></div>
+          <div class="full b-only"><label>Info (B 타입, 자유 텍스트)</label><input id="f-link" type="text" placeholder="예: Bot Link, Notion, 메모 등" /></div>
+          <div class="full a-only"><label>Hero Subtitle (A 타입 전용, HTML 가능)</label>
+            <input id="f-subtitle" type="text" value="a brief tale captures a moment trembling in secrecy." />
+          </div>
+          <div class="full"><label>Footer 텍스트 (HTML 가능, 비우면 © Your Name 자동 생성)</label>
+            <input id="f-footer" type="text" placeholder="예: &copy; 2025 Your Name &middot; do not repost" />
+          </div>
+        </div>
+        <div class="help" style="margin-top:10px">
+          상단 우측에서 <b>A TYPE</b> / <b>B TYPE</b>을 전환할 수 있어요.<br>
+          <b>A TYPE</b> = 자막 + Play/EQ 바 표시 (서사 로그 / 스토리 게시용)<br>
+          <b>B TYPE</b> = Prompt·Model·Info 메타 바 표시 (봇 카탈로그 / 캐릭터 소개용)
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">Hero</h3>
+        <label class="check" style="margin-bottom:12px">
+          <input id="f-usehero" type="checkbox" checked /> Use Hero Image
+        </label>
+        <div class="grid">
+          <div class="full"><label>Image URL</label><input id="f-img" type="url" value="https://upload.wikimedia.org/wikipedia/commons/8/83/The_Swing_%28P430%29.jpg" /></div>
+          <div><label>Focus X (%)</label><input id="f-fx" type="number" value="50" /></div>
+          <div><label>Focus Y (%)</label><input id="f-fy" type="number" value="70" /></div>
+          <div><label>Hero Height (px)</label><input id="f-hheight" type="number" value="350" /></div>
+          <div><label>Title 정렬 (3줄 텍스트)</label>
+            <select id="f-tpos">
+              <option value="left" selected>Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">Layout</h3>
+        <div class="grid">
+          <div><label>Container Max Width (px)</label><input id="f-mw" type="number" value="650" /></div>
+          <div><label>Body Font Size (px)</label><input id="f-fs" type="number" step="0.1" value="16" /></div>
+          <div><label>Line Height</label><input id="f-lh" type="number" step="0.05" value="2" /></div>
+          <div><label>Letter Spacing (px)</label><input id="f-ls" type="number" step="0.1" value="-0.9" /></div>
+          <div><label>Body Font</label>
+            <select id="f-font">
+              <option value="'Noto Serif KR','Nanum Myeongjo','Apple Myungjo',Batang, Georgia, serif" selected>Noto Serif KR (기본)</option>
+              <option value="'Nanum Myeongjo',Batang, serif">Nanum Myeongjo</option>
+              <option value="'Cormorant Garamond', Georgia, serif">Cormorant Garamond</option>
+              <option value="Georgia, serif">Georgia</option>
+              <option value="'Batang', serif">Batang</option>
+              <option value="custom">Custom (아래 스택 사용)</option>
+            </select>
+          </div>
+          <div><label>Custom Font Stack</label><input id="f-fontcustom" type="text" value="'Noto Serif KR', Georgia, serif" /></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">Paste Your Text</h3>
+        <textarea id="f-body">**Fragonard's "The Swing"** greets you with a powder-soft, *Rococo* glow, the garden trimmed like theater scenery and the air sugared with light.
+
+"As you look closer," I say, "notice how the foliage forms a proscenium around the secret." A slipper arcs midair; a hidden lover reclines in shadow; a chaperone dutifully pushes, seeing only what he wishes.
+
+She laughs—pink silk catching the sun. "Playfulness," I whisper, "masks a coded rendezvous."
+
+**Light** pools across satin; greens deepen to hush the edges. The brushwork stays *feathery*, almost musical, letting leaves and lace dissolve into delight. I think, 'this is what desire looks like when no one is meant to see.'
+
+"If you listen," I add, "you can almost hear the fabric and branches applaud."
+
+[[지금 어디야? 22:14 나]]
+
+[[[전시 끝났어. 곧 갈게. 22:16 J]]]</textarea>
+        <div class="help" style="margin-top:10px; line-height:1.7">
+          <b style="color:var(--accent)">텍스트 강조</b><br>
+          <code>**굵게**</code> · <code>*기울임*</code> · <code>***굵은 기울임***</code><br>
+          <code>"대사"</code> 큰따옴표 강조 · <code>'속마음'</code> 작은따옴표 (영어 축약형 don't, it's는 영향 없음)<br>
+          <code>---</code> 한 줄 = 구분선 · 빈 줄 = 새 문단<br><br>
+          <b style="color:var(--accent)">메시지 버블 (카카오톡/iMessage 스타일)</b><br>
+          <code>[[메시지 내용 00:29 상대방]]</code> → 파란 버블 (내가 보낸)<br>
+          <code>[[[메시지 내용 00:39 상대방]]]</code> → 회색 버블 (받은 메시지)<br>
+          <span style="color:var(--ink-mute); font-size:10.5px;">※ 둘 다 가운데 정렬. 시간은 <code>HH:MM</code> 형식, 이름은 마지막 단어. 그 사이는 모두 메시지 본문.</span>
+        </div>
+        <label class="check" style="margin-top:12px">
+          <input id="f-indent" type="checkbox" /> 각 문단 첫 줄 들여쓰기
+        </label>
+        <label class="check" style="margin-top:8px">
+          <input id="f-justify" type="checkbox" checked /> 양쪽 정렬 (text-align: justify)
+        </label>
+        <label class="check" style="margin-top:8px">
+          <input id="f-smartquote" type="checkbox" checked /> 스마트 따옴표 / 말줄임표 자동 변환 (<code>"</code>→<code>“ ”</code>, <code>'</code>→<code>‘ ’</code>, <code>...</code>→<code>…</code>)
+        </label>
+      </div>
+    </div>
+
+    <!-- ========== STYLES TAB ========== -->
+    <div data-pane="styles" style="display:none">
+      <div class="section">
+        <h3 class="section-title">Themes</h3>
+        <div class="theme-grid" id="themeGrid"></div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">Outer / Surface</h3>
+        <div class="grid">
+          <div><label>Outer Background (프레임)</label><div class="color-row"><input type="color" id="t-outerBg" value="#faf9f7" /><span id="t-outerBg-v">#faf9f7</span></div></div>
+          <div><label>Card Background</label><div class="color-row"><input type="color" id="t-card" value="#ffffff" /><span id="t-card-v">#ffffff</span></div></div>
+          <div><label>Body Text</label><div class="color-row"><input type="color" id="t-text" value="#1c1b1a" /><span id="t-text-v">#1c1b1a</span></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">Dialog &amp; Accent</h3>
+        <div class="grid">
+          <div><label>"대사" 강조 배경 (큰따옴표)</label><div class="color-row"><input type="color" id="t-hl" value="#e6e6e6" /><span id="t-hl-v">#e6e6e6</span></div></div>
+          <div><label>'속마음' 강조 배경 (작은따옴표)</label><div class="color-row"><input type="color" id="t-hl2" value="#e9e6df" /><span id="t-hl2-v">#e9e6df</span></div></div>
+          <div><label>Play 버튼 배경 (Accent)</label><div class="color-row"><input type="color" id="t-accent" value="#f4f0e3" /><span id="t-accent-v">#f4f0e3</span></div></div>
+          <div><label>Play 버튼 글자색</label><div class="color-row"><input type="color" id="t-accentText" value="#212420" /><span id="t-accentText-v">#212420</span></div></div>
+          <div><label>Muted (Pause / Footer)</label><div class="color-row"><input type="color" id="t-muted" value="#6b635e" /><span id="t-muted-v">#6b635e</span></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">Hero Overlay</h3>
+        <div class="grid">
+          <div><label>Title 색</label><div class="color-row"><input type="color" id="t-title" value="#ffffff" /><span id="t-title-v">#ffffff</span></div></div>
+          <div><label>Character Name 색</label><div class="color-row"><input type="color" id="t-char" value="#ffffff" /><span id="t-char-v">#ffffff</span></div></div>
+          <div><label>Subtitle 색 (B)</label><div class="color-row"><input type="color" id="t-subtitle" value="#ffffff" /><span id="t-subtitle-v">#ffffff</span></div></div>
+          <div><label>Overlay 어둠 (0~1)</label><input id="t-overlayDark" type="number" step="0.05" min="0" max="1" value="0.55" /></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">Preset</h3>
+        <div class="grid">
+          <div><label>Preset Name</label><input id="p-name" type="text" placeholder="My Sage v1" /></div>
+          <div style="display:flex; gap:8px; align-items:flex-end">
+            <button class="copy-btn" id="p-save">Save</button>
+            <button class="copy-btn" id="p-delete" style="background:#3a2c22;color:var(--ink)">Delete</button>
+          </div>
+          <div class="full"><label>Load Preset</label>
+            <select id="p-load"><option value="">— 저장된 preset 선택 —</option></select>
+          </div>
+          <div><button class="copy-btn" id="p-export" style="background:#2c2620;color:var(--ink); width:100%">Export JSON</button></div>
+          <div><button class="copy-btn" id="p-import" style="background:#2c2620;color:var(--ink); width:100%">Import JSON</button></div>
+        </div>
+        <div class="help">Preset는 브라우저 로컬에 저장됩니다. 백업하려면 JSON으로 내보내세요.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT PANEL -->
+  <section class="panel">
+    <div class="preview-wrap">
+      <div class="preview-frame" id="previewFrame"></div>
+    </div>
+    <div class="output-wrap">
+      <div class="output-head">
+        <strong>Generated Inline HTML</strong>
+        <button class="copy-btn" id="copyBtn">Copy</button>
+      </div>
+      <div class="output-code" id="outputCode"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+/* ============================================================
+   THEMES  (each: outerBg, card, text, hl, accent, accentText,
+                  muted, title, subtitle, char)
+   ============================================================ */
+const THEMES = {
+  // ── Real values from Log Atelier export ──
+  // hl  = "큰따옴표" 강조 배경
+  // hl2 = '작은따옴표' 강조 배경 (hl보다 옅게 — 카드 배경에 더 가까운 색)
+  Default: {
+    outerBg:'#faf9f7', card:'#ffffff', text:'#1c1b1a',
+    hl:'#e6e6e6', hl2:'#efefef',
+    accent:'#1c1b1a', accentText:'#ffffff',
+    muted:'#6b635e',
+    title:'#ffffff', subtitle:'#ffffff', char:'#ffffff'
+  },
+  Sage: {
+    outerBg:'#edeeeb', card:'#ffffff', text:'#232a25',
+    hl:'#d0ddd5', hl2:'#e0e9e4',
+    accent:'#232a25', accentText:'#ffffff',
+    muted:'#646d67',
+    title:'#ffffff', subtitle:'#ffffff', char:'#ffffff'
+  },
+  Rose: {
+    outerBg:'#efe7e8', card:'#ffffff', text:'#2a1f22',
+    hl:'#e4d8db', hl2:'#ede6e8',
+    accent:'#2a1f22', accentText:'#ffffff',
+    muted:'#7b6f74',
+    title:'#ffffff', subtitle:'#ffffff', char:'#ffffff'
+  },
+  Sepia: {
+    outerBg:'#f8f3ea', card:'#fff7ec', text:'#2b2319',
+    hl:'#eadfc9', hl2:'#f1eadc',
+    accent:'#2b2319', accentText:'#fff7ec',
+    muted:'#6a5a4a',
+    title:'#ffffff', subtitle:'#ffffff', char:'#ffffff'
+  },
+  Noir: {
+    outerBg:'#1a1816', card:'#222020', text:'#e8e6e1',
+    hl:'#3d3934', hl2:'#2f2c28',
+    accent:'#b9a981', accentText:'#1a1612',
+    muted:'#8a8278',
+    title:'#ffffff', subtitle:'#e8e6e1', char:'#d9c89c'
+  },
+  Lavender: {
+    outerBg:'#a8a8c2', card:'#eeedf0', text:'#181a4e',
+    hl:'#dbd9e8', hl2:'#e8e6f0',
+    accent:'#181a4e', accentText:'#eeedf0',
+    muted:'#2d2a47',
+    title:'#c0c0d8', subtitle:'#ffffff', char:'#c0c0d8'
+  },
+  Sky: {
+    outerBg:'#d6e7ff', card:'#f3f7fb', text:'#000000',
+    hl:'#c7d8ee', hl2:'#dbe6f4',
+    accent:'#253a5b', accentText:'#f3f7fb',
+    muted:'#9ab5d9',
+    title:'#e5f5ff', subtitle:'#ffffff', char:'#e5f5ff'
+  },
+  'Sky-Light': {
+    outerBg:'#d6e7ff', card:'#ffffff', text:'#000000',
+    hl:'#c7d8ee', hl2:'#dbe6f4',
+    accent:'#253a5b', accentText:'#ffffff',
+    muted:'#9ab5d9',
+    title:'#e5f5ff', subtitle:'#ffffff', char:'#e5f5ff'
+  },
+  Love: {
+    outerBg:'#ffdbdf', card:'#ffffff', text:'#2a1f22',
+    hl:'#ffd6e0', hl2:'#ffe4eb',
+    accent:'#941047', accentText:'#ffffff',
+    muted:'#941047',
+    title:'#ffffff', subtitle:'#ffffff', char:'#ffffff'
+  },
+  // ── New themes from external palettes ──
+  'Old Money Dark': {
+    outerBg:'#141e23', card:'#1f2a31', text:'#a08e6c',
+    hl:'#192228', hl2:'#243038',
+    accent:'#bf9f6f', accentText:'#141e23',
+    muted:'#a89070',
+    title:'#bf9f6f', subtitle:'#a89070', char:'#a89070'
+  },
+  'Old Money Light': {
+    outerBg:'#efe9da', card:'#fbf8ef', text:'#574d34',
+    hl:'#f0e9d4', hl2:'#f5efde',
+    accent:'#923838', accentText:'#fbf8ef',
+    muted:'#8b7355',
+    title:'#ffffff', subtitle:'#f7f3e8', char:'#f7f3e8'
+  },
+  Chocolate: {
+    outerBg:'#fcfaf8', card:'#ffffff', text:'#4d3a2a',
+    hl:'#f2ebe3', hl2:'#f7f4f0',
+    accent:'#3d2515', accentText:'#fcfaf8',
+    muted:'#aa7550',
+    title:'#ffffff', subtitle:'#fcfaf8', char:'#fcfaf8'
+  },
+  Espresso: {
+    outerBg:'#faf8f6', card:'#ffffff', text:'#4a3d35',
+    hl:'#efe8e0', hl2:'#f5f2ee',
+    accent:'#3a2920', accentText:'#faf8f6',
+    muted:'#9a7f60',
+    title:'#ffffff', subtitle:'#faf8f6', char:'#faf8f6'
+  },
+};
+const THEME_KEYS = ['outerBg','card','text','hl','hl2','accent','accentText','muted','title','subtitle','char'];
+
+const state = {
+  type:'A',
+  theme:'Default',
+  themeVars: {...THEMES.Default},
+};
+
+/* ---------- TAB / TYPE ---------- */
+$('tabs').addEventListener('click', (e)=>{
+  const b = e.target.closest('button'); if(!b) return;
+  for (const btn of $('tabs').children) btn.classList.toggle('active', btn===b);
+  const tab = b.dataset.tab;
+  document.querySelectorAll('[data-pane]').forEach(p=>{
+    p.style.display = (p.dataset.pane===tab) ? '' : 'none';
+  });
+});
+$('typeToggle').addEventListener('click', (e)=>{
+  const b = e.target.closest('button'); if(!b) return;
+  for (const btn of $('typeToggle').children) btn.classList.toggle('active', btn===b);
+  state.type = b.dataset.type;
+  document.body.setAttribute('data-type', state.type);
+  render();
+});
+
+/* ---------- THEMES UI ---------- */
+const themeGrid = $('themeGrid');
+Object.keys(THEMES).forEach(name=>{
+  const chip = document.createElement('div');
+  chip.className = 'theme-chip' + (name===state.theme?' active':'');
+  chip.textContent = name;
+  chip.addEventListener('click', ()=>{
+    state.theme = name;
+    state.themeVars = {...THEMES[name]};
+    for (const k of THEME_KEYS){
+      const el = $('t-'+k); if(el){ el.value = state.themeVars[k]; }
+      const lbl = $('t-'+k+'-v'); if(lbl){ lbl.textContent = state.themeVars[k]; }
+    }
+    document.querySelectorAll('.theme-chip').forEach(c=>c.classList.toggle('active', c===chip));
+    render();
+  });
+  themeGrid.appendChild(chip);
+});
+
+/* ---------- COLOR PICKERS ---------- */
+THEME_KEYS.forEach(k=>{
+  const el = $('t-'+k); const lbl = $('t-'+k+'-v');
+  if(el){
+    el.addEventListener('input', ()=>{
+      state.themeVars[k] = el.value;
+      if(lbl) lbl.textContent = el.value;
+      render();
+    });
+  }
+});
+
+/* ---------- INPUT WIRING ---------- */
+document.querySelectorAll('input, select, textarea').forEach(el=>{
+  el.addEventListener('input', render);
+  el.addEventListener('change', render);
+});
+
+/* ============================================================
+   Smart-quote & ellipsis auto-convert for the body textarea.
+   - "  → curly “ ”  based on context (open after space/start/punct, close otherwise)
+   - '  → curly ‘ ’  same rule, but apostrophes inside English words stay straight
+   - ... → …
+   IME-safe: pauses during Korean composition; ignored when toggle off.
+   ============================================================ */
+(()=>{
+  const ta = $('f-body');
+  if (!ta) return;
+  let composing = false;
+  ta.addEventListener('compositionstart', ()=>{ composing = true; });
+  ta.addEventListener('compositionend',   ()=>{ composing = false; });
+
+  function smartReplace(){
+    const checkbox = $('f-smartquote');
+    if (checkbox && !checkbox.checked) return;
+    if (composing) return;
+
+    const value = ta.value;
+    const caret = ta.selectionStart;
+
+    // We rebuild the string char-by-char so we can map the caret position.
+    let out = '';
+    let newCaret = caret;
+    const isWord = (ch)=> /[A-Za-z0-9]/.test(ch || '');
+    const opensAfter = (ch)=>{
+      // What kind of char appears immediately before the quote?
+      // If start-of-string, whitespace, or opening punctuation → use opening quote.
+      if (!ch) return true;
+      return /[\s(\[\{<—\-]/.test(ch);
+    };
+
+    let i = 0;
+    while (i < value.length){
+      const ch = value[i];
+      const prevOut = out.length ? out[out.length - 1] : '';
+      // Triple dots → ellipsis
+      if (ch === '.' && value[i+1] === '.' && value[i+2] === '.'){
+        out += '\u2026';
+        if (caret > i + 2) newCaret -= 2;
+        else if (caret > i) newCaret = out.length;
+        i += 3;
+        continue;
+      }
+      if (ch === '"'){
+        out += opensAfter(prevOut) ? '\u201C' : '\u201D';
+        i++;
+        continue;
+      }
+      if (ch === "'"){
+        // If between two word chars → apostrophe ' (don't, it's)
+        const next = value[i+1] || '';
+        if (isWord(prevOut) && isWord(next)){
+          out += '\u2019'; // typographic apostrophe
+        } else {
+          out += opensAfter(prevOut) ? '\u2018' : '\u2019';
+        }
+        i++;
+        continue;
+      }
+      out += ch;
+      i++;
+    }
+
+    if (out !== value){
+      const delta = out.length - value.length;
+      ta.value = out;
+      const newPos = Math.min(out.length, Math.max(0, caret + delta));
+      try{ ta.setSelectionRange(newPos, newPos); }catch(e){}
+      // re-render preview after substitution
+      render();
+    }
+  }
+
+  ta.addEventListener('input', smartReplace);
+})();
+
+/* ============================================================
+   BUILD HTML — exact structure matching Log Atelier output
+   ============================================================ */
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function processInline(text, v){
+  // 1) Escape HTML (including " → &quot; and ' → &#39;)
+  let h = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+  // 2) Convert curly quotes to numeric entities
+  h = h.replace(/\u201C/g, '&#8220;').replace(/\u201D/g, '&#8221;');
+  h = h.replace(/\u2018/g, '&#8216;').replace(/\u2019/g, '&#8217;');
+  // 3) Bold + italic ***text***
+  h = h.replace(/\*\*\*([^*\n]+?)\*\*\*/g, '<b><i>$1</i></b>');
+  // 4) Bold **text**
+  h = h.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
+  // 5) Italic *text*
+  h = h.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<em>$2</em>');
+  // 6) Dialog — DOUBLE quotes (straight)  "..."
+  h = h.replace(/&quot;((?:(?!&quot;).)+?)&quot;/g, (_m, inner)=>{
+    return `<span data-dia="1" style="background-color:${v.hl};color:${v.text};padding:0 6px;border-radius:4px;">&quot;${inner}&quot;</span>`;
+  });
+  // 7) Dialog — DOUBLE quotes (curly)  "..."
+  h = h.replace(/&#8220;((?:(?!&#8221;).)+?)&#8221;/g, (_m, inner)=>{
+    return `<span data-dia="1" style="background-color:${v.hl};color:${v.text};padding:0 6px;border-radius:4px;">&#8220;${inner}&#8221;</span>`;
+  });
+  // 8) Inner thought — SINGLE quotes (straight)  '...'
+  //    Open ': must NOT be preceded by an English letter/digit/underscore
+  //                — blocks "it's", "don't", "cat's"
+  //                  but ALLOWS Korean (e.g. 한글 바로 뒤의 ')
+  //    Close ': must NOT be followed by an English letter/digit
+  //                — Korean particles (이, 을, 는, 라고…) are OK
+  //                  English contractions are blocked.
+  const softHl = v.hl2 || hexToRgba(v.hl, 0.5);
+  h = h.replace(/(^|[^A-Za-z0-9_])&#39;((?:(?!&#39;)[^\n])+?)&#39;(?![A-Za-z0-9_])/g, (_m, before, inner)=>{
+    return `${before}<span data-dia="2" style="background-color:${softHl};color:${v.text};padding:0 6px;border-radius:4px;">&#39;${inner}&#39;</span>`;
+  });
+  // 9) Inner thought — SINGLE quotes (curly)  '...'
+  h = h.replace(/&#8216;((?:(?!&#8217;).)+?)&#8217;/g, (_m, inner)=>{
+    return `<span data-dia="2" style="background-color:${softHl};color:${v.text};padding:0 6px;border-radius:4px;">&#8216;${inner}&#8217;</span>`;
+  });
+  // 10) Line breaks within paragraph
+  h = h.replace(/\n/g, '<br>');
+  return h;
+}
+
+function buildHTML(){
+  const v = state.themeVars;
+  const T = state.type; // 'A' | 'B'
+
+  // ---- Common fields ----
+  const title     = $('f-title').value || '';
+  const character = $('f-character').value || '';
+  const author    = $('f-author').value || '';
+  const tagsRaw   = ($('f-tags').value || '').trim();
+  const tags      = tagsRaw ? tagsRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
+  const subtitle  = $('f-subtitle').value || '';
+
+  // Hero
+  const useHero = $('f-usehero').checked;
+  const img     = $('f-img').value || '';
+  const fx      = parseInt($('f-fx').value || 50, 10);
+  const fy      = parseInt($('f-fy').value || 50, 10);
+  const hh      = parseInt($('f-hheight').value || 350, 10);
+  const tpos    = $('f-tpos').value;
+
+  // A meta
+  const promptName = ($('f-prompt').value || '').trim();
+  const modelName  = ($('f-model').value || '').trim();
+  const botLink    = ($('f-link').value || '').trim();
+
+  // B
+  const progressEl = $('f-progress');
+  const progress = progressEl ? Math.min(100, Math.max(0, parseInt(progressEl.value || 0, 10))) : 0;
+
+  // Layout
+  const mw    = parseInt($('f-mw').value || 650, 10);
+  const fs    = parseFloat($('f-fs').value || 16);
+  const lh    = parseFloat($('f-lh').value || 2);
+  const ls    = parseFloat($('f-ls').value || -0.9);
+  const font  = $('f-font').value === 'custom' ? $('f-fontcustom').value : $('f-font').value;
+  const indent  = $('f-indent').checked;
+  const justify = $('f-justify').checked;
+  const overlayDark = parseFloat($('t-overlayDark') ? ($('t-overlayDark').value || 0.5) : 0.5);
+
+  // ---- Hero shared ----
+  // tpos now controls the HORIZONTAL alignment of the title cluster only
+  // (3 lines: by Author / Title / Character Name).
+  // Vertical alignment is fixed (middle) so subtitle & playbar stay put.
+  // Backwards-compat: old saved presets may still hold top/middle/bottom — fall
+  // back to 'left' in that case.
+  const validAlign = (tpos === 'center' || tpos === 'right') ? tpos : 'left';
+  const overlayGrad = `linear-gradient(to top,rgba(0,0,0,${overlayDark}),rgba(0,0,0,${(overlayDark*0.3).toFixed(2)}),rgba(0,0,0,${(overlayDark*0.12).toFixed(2)}))`;
+  const heroBgRule = (useHero && img)
+    ? `background:url('${img}') ${fx}% ${fy}% / cover no-repeat;`
+    : `background:${v.muted};`;
+  const authorLine = author
+    ? `<div style="font-size:13px;letter-spacing:0.08em;text-align:${validAlign};">by <span style="font-weight:600;">${escapeHtml(author)}</span></div>`
+    : '';
+
+  // ---- Hidden thumbnail (for board auto-thumb extraction) ----
+  const thumbImg = (useHero && img)
+    ? `<p><img style="width: 0px; height: 0px;" src="${img}" class="fr-fic fr-dii"></p>`
+    : '';
+
+  // ---- Message bubble helper ----
+  // [[content HH:MM name]]   → SENT  (blue, right-tail)
+  // [[[content HH:MM name]]] → RECEIVED (gray, left-tail)
+  // Both rendered centered on the page; the bubble's missing rounded corner
+  // (bottom-right vs bottom-left) shows the speaker side, like iMessage.
+  function renderBubble(raw, kind){
+    // raw = inside the brackets. Split on whitespace.
+    // Expect: <message words...> <HH:MM> <name>
+    const tokens = raw.trim().split(/\s+/);
+    let time = '', name = '', message = raw.trim();
+    // Find a HH:MM token from the end
+    const timeRe = /^\d{1,2}:\d{2}$/;
+    // Try the standard: last token = name, second-to-last = time
+    if (tokens.length >= 3 && timeRe.test(tokens[tokens.length - 2])){
+      name = tokens[tokens.length - 1];
+      time = tokens[tokens.length - 2];
+      message = tokens.slice(0, tokens.length - 2).join(' ');
+    }
+    // Fallback: maybe just time + name with no message (rare)
+    else if (tokens.length === 2 && timeRe.test(tokens[0])){
+      time = tokens[0];
+      name = tokens[1];
+      message = '';
+    }
+    // Process message inline (so **bold**, "dialog" etc. work inside bubbles)
+    const messageHTML = message ? processInline(message, v) : '';
+
+    const isSent = (kind === 'sent');
+    const bubbleBg     = isSent ? '#007aff' : '#e5e5ea';
+    const bubbleColor  = isSent ? '#ffffff' : '#000000';
+    const tailRadius   = isSent
+      ? 'border-bottom-right-radius: 0'
+      : 'border-bottom-left-radius: 0';
+
+    return `<div style="margin-bottom: 15px; text-align: center;">
+<div style="font-size: 10.5px; color: #888; margin-bottom: 5px;">${escapeHtml(time)}</div>
+<div style="display: inline-block; max-width: 85%; text-align: center;">
+<div style="display: inline-block; padding: 10px 15px; border-radius: 18px; ${tailRadius}; font-size: 14px; background: ${bubbleBg}; color: ${bubbleColor}; word-break: break-word; text-align: left;">${messageHTML}</div>
+<div style="font-size: 10.5px; color: #888; margin-top: 4px; text-align: center;">${escapeHtml(name)}</div>
+</div>
+</div>`;
+  }
+
+  // ---- Body paragraphs (format differs slightly between A and B) ----
+  const raw = $('f-body').value || '';
+  const blocks = raw.split(/\n{2,}/);
+
+  let pStyle, spacer;
+  if (T === 'B'){
+    // B (catalog): tighter style, no data-ke-size
+    pStyle = `margin:0;line-height:${lh};letter-spacing:${ls}px;font-size:${fs}px;text-indent:${indent?'1em':'0'}${justify?';text-align:justify':''}`;
+    spacer = `<p><br></p>`;
+  } else {
+    // A (narrative log): kakao-editor-style attrs, justified by default
+    pStyle = `margin: 0px; line-height: ${lh}; letter-spacing: ${ls}px; font-size: ${fs}px; text-indent: ${indent?'1em':'0px'}; text-align: ${justify?'justify':'left'};`;
+    spacer = `<p style="text-align: ${justify?'justify':'left'};" data-ke-size="size16">&nbsp;</p>`;
+  }
+
+  // Regexes for message-bubble blocks. Triple FIRST (so [[[...]]] isn't
+  // mistaken for [[...]]). Each must occupy the whole trimmed line.
+  const tripleRe = /^\[\[\[([\s\S]+?)\]\]\]$/;
+  const doubleRe = /^\[\[([\s\S]+?)\]\]$/;
+
+  const paragraphHTMLs = blocks.map(b=>{
+    const trimmed = b.trim();
+    if (!trimmed) return '';
+    // Message bubbles override paragraph rendering
+    const triple = trimmed.match(tripleRe);
+    if (triple) return renderBubble(triple[1], 'received');
+    const double = trimmed.match(doubleRe);
+    if (double) return renderBubble(double[1], 'sent');
+    if (trimmed === '---'){
+      const dataKe = (T==='A') ? ' data-ke-size="size16"' : '';
+      return `<p style="${pStyle}"${dataKe}><span style="display:inline-block;width:100%;border-top:1px solid ${hexToRgba(v.muted,0.35)};margin:6px 0">&nbsp;</span></p>`;
+    }
+    const inner = processInline(trimmed, v);
+    const dataKe = (T==='A') ? ' data-ke-size="size16"' : '';
+    return `<p style="${pStyle}"${dataKe}>${inner}</p>`;
+  }).filter(Boolean);
+  const bodyHTML = paragraphHTMLs.join('\n' + spacer + '\n');
+
+  // ===================================================================
+  //  B TYPE  ──  Hero (slim) → Floating Meta Bar (-54px overlap) → Card
+  //              (formerly A — bot catalog / character intro)
+  // ===================================================================
+  if (T === 'B'){
+    const heroBlock = `
+    <div style="width:100%;height:${hh}px;display:table;${heroBgRule}border-radius:14px;box-sizing:border-box;">
+      <div style="display:table-cell;vertical-align:middle;text-align:${validAlign};padding:26px 24px 24px 24px;background:${overlayGrad};border-radius:14px;">
+        <div style="color:${v.title};text-shadow:0 1px 7px rgba(0,0,0,0.7);display:inline-block;max-width:100%;text-align:${validAlign};">
+          ${authorLine}
+          <h1 style="margin:8px 0 6px 0;font-size:32px;font-weight:700;letter-spacing:0.02em;color:${v.title};text-align:${validAlign};">${escapeHtml(title)}</h1>
+          <div style="font-size:15px;text-transform:uppercase;letter-spacing:0.12em;color:${v.char};text-align:${validAlign};">${escapeHtml(character)}</div>
+        </div>
+      </div>
+    </div>`;
+
+    // Floating meta bar — dark translucent
+    const metaParts = [];
+    if (modelName)  metaParts.push(`<span style="margin-right:10px;color:#ffffff;">${escapeHtml(modelName)}</span>`);
+    else            metaParts.push(`<span style="margin-right:10px;color:#ffffff;">Model</span>`);
+    metaParts.push(`<span style="margin:0 8px;color:#ffffff;">&bull;</span>`);
+    if (promptName) metaParts.push(`<span style="margin-right:10px;color:#ffffff;">${escapeHtml(promptName)}</span>`);
+    else            metaParts.push(`<span style="margin-right:10px;color:#ffffff;">Prompt</span>`);
+    metaParts.push(`<span style="margin:0 8px;color:#ffffff;">&bull;</span>`);
+    if (botLink)    metaParts.push(`<span style="margin-right:10px;color:#ffffff;">${escapeHtml(botLink)}</span>`);
+    else            metaParts.push(`<span style="margin-right:10px;color:#ffffff;">Info</span>`);
+
+    const metaBar = `
+  <div style="margin:-54px 18px 0 18px;">
+    <div style="background:rgba(20, 18, 16, 0.3);color:#ffffff;border-radius:10px;padding:10px 14px;box-shadow:rgba(0,0,0,0.22) 0px 6px 18px;font-size:clamp(11px,1.6vw,14px);line-height:1.6;letter-spacing:0.02em;box-sizing:border-box;word-break:break-word;text-align:center;">
+      ${metaParts.join('\n      ')}&nbsp;
+    </div>
+  </div>`;
+
+    // B-type card (catalog): no overlap, margin-top:18px, lighter shadow, more padding
+    const tagsHTML = tags.length ? `<div style="margin:0 0 16px 0;">
+${tags.map(t=>`<span style="display:inline-block;padding:3px 10px;margin:0 4px 4px 0;border-radius:999px;background:${v.hl};color:${v.text};font-size:11px;letter-spacing:0.06em;" data-dia="1">${escapeHtml(t)}</span>`).join('')}
+</div>` : '';
+
+    const cardBlock = `
+  <div style="background-color:${v.card};border-radius:12px;padding:36px 30px;margin-top:18px;box-shadow:0 2px 8px rgba(0,0,0,0.05); color:${v.text};">
+    ${tagsHTML}${bodyHTML}
+  </div>`;
+
+    const footerCustom = ($('f-footer').value || '').trim();
+    const footerText = footerCustom
+      ? footerCustom
+      : (author ? `&copy; ${escapeHtml(author)} &middot; All rights reserved` : '');
+    const footer = footerText ? `
+  <div style="margin-top:28px;padding:14px 0 30px 0;border-top:1px solid ${hexToRgba(v.muted,0.35)};text-align:center;color:${v.muted};">
+    <div style="font-size:12px;">
+      <span style="font-size:12px;">${footerText}</span>
+    </div>
+  </div>` : '';
+
+    return `${thumbImg}<div style="max-width:${mw}px;margin:0 auto;padding:0;font-family:${font};color:${v.text};background-color:${v.outerBg};border-radius:14px;">
+  <div style="border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+${heroBlock}
+  </div>
+${metaBar}
+${cardBlock}
+${footer}
+</div>`;
+  }
+
+  // ===================================================================
+  //  A TYPE  ──  Hero (with subtitle + play bar) → Card (-45px overlap)
+  //              (formerly B — narrative log / story post)
+  // ===================================================================
+  const subtitleLine = subtitle
+    ? `<br /><div style="font-size: 13px; line-height: 1.6; letter-spacing: -0.4px; color: ${v.subtitle}; text-align: ${validAlign};">${subtitle}</div>`
+    : '';
+
+  // EQ bars — 5 vertical bars that pulse up and down via SVG animate
+  // (Works inline in blog editors since no CSS @keyframes are needed.)
+  const eqColor = v.accent;
+  const eqBars = [
+    { x: 0,  hMin: 5,  hMax: 13, delay: 0.00 },
+    { x: 6,  hMin: 4,  hMax: 11, delay: 0.18 },
+    { x: 12, hMin: 5,  hMax: 13, delay: 0.36 },
+    { x: 18, hMin: 6,  hMax: 14, delay: 0.09 },
+    { x: 24, hMin: 4,  hMax: 10, delay: 0.27 },
+  ];
+  const eqSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="27" height="14" viewBox="0 0 27 14" style="display:inline-block;vertical-align:middle;">
+${eqBars.map(b=>`<rect x="${b.x}" y="${14-b.hMin}" width="3" height="${b.hMin}" rx="1.5" fill="${eqColor}">
+<animate attributeName="height" values="${b.hMin};${b.hMax};${b.hMin}" dur="0.9s" begin="${b.delay}s" repeatCount="indefinite" />
+<animate attributeName="y" values="${14-b.hMin};${14-b.hMax};${14-b.hMin}" dur="0.9s" begin="${b.delay}s" repeatCount="indefinite" />
+</rect>`).join('')}
+</svg>`;
+
+  const playTable = `
+<table style="margin-top: 24px; width: 100%; border-collapse: collapse; border: 0; border-spacing: 0;" data-ke-align="alignLeft">
+<tbody>
+<tr>
+<td style="padding: 0; vertical-align: middle; border: 0;">
+<div style="display: inline-block; word-break: keep-all; padding: 6px 14px; border-radius: 999px; background-color: ${v.accent}; color: ${v.accentText}; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; box-shadow: 0 3px 10px rgba(0,0,0,0.3); white-space: nowrap; line-height: 1;">&#9654;</div>
+</td>
+<td style="padding: 0; vertical-align: middle; border: 0;">
+<div style="display: inline-block; word-break: keep-all; padding: 6px 14px; border-radius: 999px; background-color: ${v.hl}; color: ${v.muted}; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid ${hexToRgba(v.muted,0.2)}; margin-left: 6px; white-space: nowrap; line-height: 1;">&#10074;&#10074;</div>
+</td>
+<td style="padding: 0 0 0 14px; vertical-align: middle; width: 100%; border: 0; text-align: left;">
+${eqSvg}
+</td>
+</tr>
+</tbody>
+</table>`;
+
+  const heroBlockB = `
+<div style="width: 100%; height: ${hh}px; display: table; ${heroBgRule} border-radius: 14px; box-sizing: border-box;">
+<div style="display: table-cell; vertical-align: middle; padding: 28px 32px 32px 32px; background: ${overlayGrad}; border-radius: 14px;">
+<div style="max-width: 100%; color: ${v.title}; text-shadow: 0 1px 7px rgba(0,0,0,0.7);">
+${authorLine}
+<h1 style="margin: 10px 0px 4px; font-size: 30px; font-weight: bold; letter-spacing: 0.02em; color: ${v.title}; line-height: 1.2; text-align: ${validAlign};">${escapeHtml(title)}</h1>
+<div style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.16em; color: ${v.char}; margin-bottom: 20px; text-align: ${validAlign};">${escapeHtml(character)}</div>
+${subtitleLine}
+</div>
+${playTable}
+</div>
+</div>`;
+
+  const tagsHTML = tags.length ? `<div style="margin: 0 0 14px 0;">
+${tags.map(t=>`<span style="display:inline-block; padding:3px 10px; margin:0 4px 4px 0; border-radius:999px; background:${v.hl}; color:${v.text}; font-size:11px; letter-spacing:0.06em;" data-dia="1">${escapeHtml(t)}</span>`).join('')}
+</div>` : '';
+
+  const cardBlockB = `
+<div style="background-color: ${v.card}; border-radius: 12px; padding: 25px 20px; margin: -45px 18px 0 18px; box-shadow: 0 4px 14px rgba(0,0,0,0.2); color: ${v.text};">
+${tagsHTML}${bodyHTML}
+</div>`;
+
+  const footerCustomA = ($('f-footer').value || '').trim();
+  const footerTextA = footerCustomA
+    ? footerCustomA
+    : (author ? `&copy; ${escapeHtml(author)} &middot; All rights reserved` : '');
+  const footerB = footerTextA ? `
+<div style="margin-top: 22px; padding: 14px 0 30px 0; border-top: 1px solid ${hexToRgba(v.muted,0.35)}; text-align: center; color: ${v.muted};">
+<div style="font-size: 12px; line-height: 1.2;"><span style="font-size: 12px;">${footerTextA}</span></div>
+</div>` : '';
+
+  return `${thumbImg}\n<div style="max-width: ${mw}px; margin: 0 auto; padding: 0; font-family: ${font}; color: ${v.text}; background-color: ${v.outerBg}; border-radius: 14px;">
+<div style="border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+${heroBlockB}
+</div>
+${cardBlockB}
+${footerB}
+</div>`;
+}
+
+/* hex → rgba helper (also passes through rgba/named values) */
+function hexToRgba(hex, alpha){
+  if(!hex) return `rgba(0,0,0,${alpha})`;
+  if(hex.startsWith('rgb')) return hex;
+  const m = hex.replace('#','');
+  const full = m.length===3 ? m.split('').map(c=>c+c).join('') : m;
+  const r = parseInt(full.substring(0,2),16);
+  const g = parseInt(full.substring(2,4),16);
+  const b = parseInt(full.substring(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/* ---------- RENDER ---------- */
+function render(){
+  const html = buildHTML();
+  $('previewFrame').innerHTML = html;
+  $('outputCode').textContent = html;
+}
+
+/* ---------- COPY ---------- */
+$('copyBtn').addEventListener('click', async ()=>{
+  try{
+    await navigator.clipboard.writeText($('outputCode').textContent);
+    const btn = $('copyBtn'); btn.textContent='Copied!'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='Copy'; btn.classList.remove('copied'); }, 1400);
+  }catch(e){
+    const r = document.createRange(); r.selectNode($('outputCode'));
+    window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
+    document.execCommand('copy'); window.getSelection().removeAllRanges();
+    $('copyBtn').textContent='Copied!';
+    setTimeout(()=>{ $('copyBtn').textContent='Copy'; }, 1400);
+  }
+});
+
+/* ---------- PRESETS ---------- */
+const PRESET_KEY = 'log-atelier-presets-v2';
+function loadPresets(){ try{ return JSON.parse(localStorage.getItem(PRESET_KEY)||'{}'); }catch{ return {}; } }
+function savePresets(o){ localStorage.setItem(PRESET_KEY, JSON.stringify(o)); }
+function snapshot(){
+  const s = { type: state.type, theme: state.theme, vars: {...state.themeVars}, fields: {} };
+  document.querySelectorAll('[id^="f-"], [id^="t-"]').forEach(el=>{
+    if(el.type==='checkbox') s.fields[el.id] = el.checked;
+    else if(el.type==='color' || el.type==='text' || el.type==='url' || el.type==='number' || el.tagName==='SELECT' || el.tagName==='TEXTAREA') s.fields[el.id] = el.value;
+  });
+  return s;
+}
+function restore(snap){
+  if(!snap || typeof snap !== 'object') return;
+
+  // 1) Type
+  if(snap.type === 'A' || snap.type === 'B'){
+    state.type = snap.type;
+    for (const btn of $('typeToggle').children){
+      btn.classList.toggle('active', btn.dataset.type===state.type);
+    }
+  }
+
+  // 2) Theme name
+  if(snap.theme){
+    state.theme = snap.theme;
+    document.querySelectorAll('.theme-chip').forEach(c=>{
+      c.classList.toggle('active', c.textContent===state.theme);
+    });
+  }
+
+  // 3) Theme variables — accept several locations
+  //    Priority: snap.vars  >  snap.themeVars  >  snap.fields[t-*]
+  let vars = null;
+  if (snap.vars && typeof snap.vars === 'object') vars = snap.vars;
+  else if (snap.themeVars && typeof snap.themeVars === 'object') vars = snap.themeVars;
+  else if (snap.fields){
+    // Reconstruct vars from t-* fields
+    const reconstructed = {};
+    let foundAny = false;
+    for(const k of THEME_KEYS){
+      if (snap.fields['t-'+k] !== undefined){
+        reconstructed[k] = snap.fields['t-'+k];
+        foundAny = true;
+      }
+    }
+    if (foundAny) vars = reconstructed;
+  }
+  if (vars){
+    // Merge with current Default so missing keys don't break preview
+    state.themeVars = { ...THEMES.Default, ...state.themeVars, ...vars };
+    // Sync color pickers + labels
+    for (const k of THEME_KEYS){
+      const el = $('t-'+k);
+      if (el && state.themeVars[k] !== undefined){
+        el.value = state.themeVars[k];
+      }
+      const lbl = $('t-'+k+'-v');
+      if (lbl && state.themeVars[k] !== undefined){
+        lbl.textContent = state.themeVars[k];
+      }
+    }
+  }
+
+  // 4) Form fields (f-* and any other t-* that aren't in THEME_KEYS like t-overlayDark)
+  if (snap.fields && typeof snap.fields === 'object'){
+    for (const [id, val] of Object.entries(snap.fields)){
+      const el = document.getElementById(id);
+      if (!el) continue;
+      if (el.type === 'checkbox'){
+        el.checked = !!val;
+      } else {
+        el.value = (val === null || val === undefined) ? '' : val;
+      }
+      // Update any "-v" label that mirrors this input
+      const lbl = $(id+'-v');
+      if (lbl) lbl.textContent = (val === null || val === undefined) ? '' : val;
+    }
+  }
+
+  render();
+}
+function refreshPresetList(){
+  const sel = $('p-load'); const data = loadPresets();
+  sel.innerHTML = '<option value="">— 저장된 preset 선택 —</option>';
+  Object.keys(data).sort().forEach(name=>{
+    const o = document.createElement('option'); o.value=name; o.textContent=name; sel.appendChild(o);
+  });
+}
+$('p-save').addEventListener('click', ()=>{
+  const name = ($('p-name').value||'').trim(); if(!name){ alert('Preset 이름을 입력하세요.'); return; }
+  const all = loadPresets(); all[name] = snapshot(); savePresets(all);
+  refreshPresetList(); alert(`"${name}" 저장됨`);
+});
+$('p-delete').addEventListener('click', ()=>{
+  const name = $('p-load').value || ($('p-name').value||'').trim();
+  if(!name){ alert('삭제할 preset을 선택하세요.'); return; }
+  const all = loadPresets(); delete all[name]; savePresets(all); refreshPresetList();
+});
+$('p-load').addEventListener('change', ()=>{
+  const name = $('p-load').value; if(!name) return;
+  restore(loadPresets()[name]);
+});
+$('p-export').addEventListener('click', ()=>{
+  try{
+    const snap = snapshot();
+    const json = JSON.stringify(snap, null, 2);
+    const blob = new Blob([json], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (($('p-name').value || '').trim() || 'log-atelier-theme') + '.json';
+    a.style.position = 'fixed';
+    a.style.left = '-9999px';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{
+      if(a.parentNode) document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }catch(err){
+    alert('Export 중 오류: ' + err.message);
+    console.error(err);
+  }
+});
+$('p-import').addEventListener('click', ()=>{
+  // Create a real, attached file input so all browsers trigger the dialog
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.style.position = 'fixed';
+  input.style.left = '-9999px';
+  document.body.appendChild(input);
+
+  input.addEventListener('change', (e)=>{
+    const f = e.target.files && e.target.files[0];
+    if(!f){ document.body.removeChild(input); return; }
+    const r = new FileReader();
+    r.onload = (ev)=>{
+      let snap;
+      try{
+        snap = JSON.parse(ev.target.result);
+      }catch(err){
+        alert('JSON을 파싱하지 못했습니다.\n오류: ' + err.message);
+        if(input.parentNode) document.body.removeChild(input);
+        return;
+      }
+      try{
+        // Accept multiple shapes:
+        //  (1) full snapshot: { type, theme, vars, fields }
+        //  (2) legacy / partial: { vars: {...} }
+        //  (3) just fields: { fields: {...} }
+        //  (4) Log Atelier export: { outerBg, cardBg, textColor, hiColor, ... }
+        let normalised;
+        // Detect Log Atelier original export format by its unique keys
+        const isLogAtelierExport = snap && typeof snap === 'object' &&
+          ('cardBg' in snap || 'textColor' in snap || 'hiColor' in snap || 'footerColor' in snap);
+        if (isLogAtelierExport){
+          // Map Log Atelier keys → our internal keys
+          const mapped = {};
+          if (snap.outerBg !== undefined)            mapped.outerBg = snap.outerBg;
+          if (snap.cardBg !== undefined)             mapped.card = snap.cardBg;
+          if (snap.textColor !== undefined)          mapped.text = snap.textColor;
+          if (snap.hiColor !== undefined)            mapped.hl = snap.hiColor;
+          if (snap.hiColorB !== undefined)           mapped.hl2 = snap.hiColorB;
+          if (snap.playBtnBgVal !== undefined)       mapped.accent = snap.playBtnBgVal;
+          if (snap.playBtnTextVal !== undefined)     mapped.accentText = snap.playBtnTextVal;
+          if (snap.footerColor !== undefined)        mapped.muted = snap.footerColor;
+          if (snap.titleClusterColor !== undefined){ mapped.title = snap.titleClusterColor; mapped.char = snap.titleClusterColor; }
+          if (snap.heroSubtitleColor !== undefined)  mapped.subtitle = snap.heroSubtitleColor;
+          normalised = { vars: mapped };
+        } else if (snap && (snap.fields || snap.vars || snap.type || snap.theme)){
+          normalised = snap;
+        } else if (snap && typeof snap === 'object'){
+          normalised = { vars: snap };
+        } else {
+          throw new Error('알 수 없는 JSON 형식');
+        }
+        restore(normalised);
+        alert('Preset을 불러왔습니다.');
+      }catch(err){
+        alert('Preset 적용 중 오류가 발생했습니다.\n' + err.message);
+        console.error(err);
+      }finally{
+        if(input.parentNode) document.body.removeChild(input);
+      }
+    };
+    r.onerror = ()=>{
+      alert('파일을 읽지 못했습니다.');
+      if(input.parentNode) document.body.removeChild(input);
+    };
+    r.readAsText(f);
+  });
+
+  input.click();
+});
+
+refreshPresetList();
+document.body.setAttribute('data-type', state.type);
+render();
+</script>
+</body>
+</html>
