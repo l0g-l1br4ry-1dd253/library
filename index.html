@@ -37,12 +37,18 @@
     opacity:.45; mix-blend-mode:overlay;
   }
 
-  header{position:relative; z-index:2; text-align:center; padding:48px 24px 8px;}
+  header{position:relative; z-index:2; text-align:center; padding:48px 24px 18px;}
   header h1{
     font-family:'Cormorant Garamond', serif; font-weight:500;
     letter-spacing:.32em; font-size:clamp(34px, 5.6vw, 64px);
     color:var(--ink); margin:0;
     text-shadow:0 2px 30px rgba(0,0,0,.6);
+  }
+  .header-sub{
+    font-family:'Cormorant Garamond', serif; font-weight:400;
+    font-size:clamp(11px, 1.2vw, 13px);
+    letter-spacing:.32em; text-transform:uppercase;
+    color:var(--ink-mute); margin:14px 0 0;
   }
   .sub-mark{display:none;}
 
@@ -162,6 +168,7 @@
 
 <header>
   <h1>LOG LIBRARY</h1>
+  <p class="header-sub">Last Updated &middot; May 24, 2026</p>
 </header>
 
 <main>
@@ -700,7 +707,7 @@ function buildHTML(){
     ? `background:url('${img}') ${fx}% ${fy}% / cover no-repeat;`
     : `background:${v.muted};`;
   const authorLine = author
-    ? `<div style="font-size:13px;letter-spacing:0.08em;text-align:${validAlign};">by <span style="font-weight:600;">${escapeHtml(author)}</span></div>`
+    ? `<div style="font-size:13px;letter-spacing:0.08em;text-align:${validAlign};">by <span style="font-weight:600;">${escapeHtml(author.toUpperCase())}</span></div>`
     : '';
 
   // ---- Hidden thumbnail (for board auto-thumb extraction) ----
@@ -742,11 +749,13 @@ function buildHTML(){
       ? 'border-bottom-right-radius: 0'
       : 'border-bottom-left-radius: 0';
 
-    return `<div style="margin-bottom: 15px; text-align: center;">
-<div style="font-size: 10.5px; color: #888; margin-bottom: 5px;">${escapeHtml(time)}</div>
-<div style="display: inline-block; max-width: 85%; text-align: center;">
-<div style="display: inline-block; padding: 10px 15px; border-radius: 18px; ${tailRadius}; font-size: 14px; background: ${bubbleBg}; color: ${bubbleColor}; word-break: break-word; text-align: left;">${messageHTML}</div>
-<div style="font-size: 10.5px; color: #888; margin-top: 4px; text-align: center;">${escapeHtml(name)}</div>
+    // 메시지는 본문 폰트와 무관하게 항상 Noto Sans (고딕) 으로 고정
+    const msgFont = "'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif";
+    return `<div style="margin-bottom: 15px; text-align: center; font-family: ${msgFont};">
+<div style="font-size: 10.5px; color: #888; margin-bottom: 5px; font-family: ${msgFont};">${escapeHtml(time)}</div>
+<div style="display: inline-block; max-width: 85%; text-align: center; font-family: ${msgFont};">
+<div style="display: inline-block; padding: 10px 15px; border-radius: 18px; ${tailRadius}; font-size: 14px; background: ${bubbleBg}; color: ${bubbleColor}; word-break: break-word; text-align: justify; font-family: ${msgFont};">${messageHTML}</div>
+<div style="font-size: 10.5px; color: #888; margin-top: 4px; text-align: center; font-family: ${msgFont};">${escapeHtml(name)}</div>
 </div>
 </div>`;
   }
@@ -862,22 +871,18 @@ ${footer}
     ? `<br /><div style="font-size: 13px; line-height: 1.6; letter-spacing: -0.4px; color: ${v.subtitle}; text-align: ${validAlign};">${subtitle}</div>`
     : '';
 
-  // EQ bars — 5 vertical bars that pulse up and down via SVG animate
-  // (Works inline in blog editors since no CSS @keyframes are needed.)
+  // EQ bars — 5 vertical bars that pulse via CSS @keyframes.
+  // (Tistory의 HTML 새니타이저는 SVG <animate> 태그를 잘라내는 경우가 있어
+  //  CSS keyframes 기반의 div 방식으로 구현. <style> 블록은 출력 최상단에 함께 emit.)
   const eqColor = v.accent;
   const eqBars = [
-    { x: 0,  hMin: 5,  hMax: 13, delay: 0.00 },
-    { x: 6,  hMin: 4,  hMax: 11, delay: 0.18 },
-    { x: 12, hMin: 5,  hMax: 13, delay: 0.36 },
-    { x: 18, hMin: 6,  hMax: 14, delay: 0.09 },
-    { x: 24, hMin: 4,  hMax: 10, delay: 0.27 },
+    { h: 5,  delay: 0.00 },
+    { h: 11, delay: 0.18 },
+    { h: 7,  delay: 0.36 },
+    { h: 13, delay: 0.09 },
+    { h: 5,  delay: 0.27 },
   ];
-  const eqSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="27" height="14" viewBox="0 0 27 14" style="display:inline-block;vertical-align:middle;">
-${eqBars.map(b=>`<rect x="${b.x}" y="${14-b.hMin}" width="3" height="${b.hMin}" rx="1.5" fill="${eqColor}">
-<animate attributeName="height" values="${b.hMin};${b.hMax};${b.hMin}" dur="0.9s" begin="${b.delay}s" repeatCount="indefinite" />
-<animate attributeName="y" values="${14-b.hMin};${14-b.hMax};${14-b.hMin}" dur="0.9s" begin="${b.delay}s" repeatCount="indefinite" />
-</rect>`).join('')}
-</svg>`;
+  const eqHtml = `<span style="display:inline-flex;align-items:flex-end;gap:3px;height:14px;vertical-align:middle;">${eqBars.map(b=>`<span class="la-eq-bar" style="display:inline-block;width:3px;height:${b.h}px;background:${eqColor};border-radius:2px 2px 0 0;transform-origin:bottom;animation:la-eq-pulse 0.9s ease-in-out ${b.delay}s infinite alternate;"></span>`).join('')}</span>`;
 
   const playTable = `
 <table style="margin-top: 24px; width: 100%; border-collapse: collapse; border: 0; border-spacing: 0;" data-ke-align="alignLeft">
@@ -890,7 +895,7 @@ ${eqBars.map(b=>`<rect x="${b.x}" y="${14-b.hMin}" width="3" height="${b.hMin}" 
 <div style="display: inline-block; word-break: keep-all; padding: 6px 14px; border-radius: 999px; background-color: ${v.hl}; color: ${v.muted}; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid ${hexToRgba(v.muted,0.2)}; margin-left: 6px; white-space: nowrap; line-height: 1;">&#10074;&#10074;</div>
 </td>
 <td style="padding: 0 0 0 14px; vertical-align: middle; width: 100%; border: 0; text-align: left;">
-${eqSvg}
+${eqHtml}
 </td>
 </tr>
 </tbody>
@@ -927,7 +932,11 @@ ${tagsHTML}${bodyHTML}
 <div style="font-size: 12px; line-height: 1.2;"><span style="font-size: 12px;">${footerTextA}</span></div>
 </div>` : '';
 
-  return `${thumbImg}\n<div style="max-width: ${mw}px; margin: 0 auto; padding: 0; font-family: ${font}; color: ${v.text}; background-color: ${v.outerBg}; border-radius: 14px;">
+  // <style> 블록을 출력 최상단에 함께 emit — 티스토리는 본문 내 <style> 허용
+  // (참고: 사용자가 제공한 검증된 레퍼런스도 동일한 방식을 사용해 정상 동작 확인됨)
+  const styleBlock = `<style>@keyframes la-eq-pulse{from{transform:scaleY(0.35)}to{transform:scaleY(1)}}</style>`;
+
+  return `${styleBlock}${thumbImg}\n<div style="max-width: ${mw}px; margin: 0 auto; padding: 0; font-family: ${font}; color: ${v.text}; background-color: ${v.outerBg}; border-radius: 14px;">
 <div style="border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
 ${heroBlockB}
 </div>
