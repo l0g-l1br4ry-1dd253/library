@@ -168,7 +168,7 @@
 
 <header>
   <h1>LOG LIBRARY</h1>
-  <p class="header-sub">Last Updated &middot; May 24, 2026</p>
+  <p class="header-sub">Last Updated &middot; May 30, 2026</p>
 </header>
 
 <main>
@@ -872,17 +872,20 @@ ${footer}
     : '';
 
   // EQ bars — 5 vertical bars that pulse via CSS @keyframes.
-  // (Tistory의 HTML 새니타이저는 SVG <animate> 태그를 잘라내는 경우가 있어
-  //  CSS keyframes 기반의 div 방식으로 구현. <style> 블록은 출력 최상단에 함께 emit.)
+  // (티스토리 에디터는 HTML→에디터 전환 시 ① 내용이 비어 있는 인라인 <span> 을 삭제하고
+  //  ② 인라인 <span> 에 붙은 class 를 텍스트 서식용으로 보고 떼어내며
+  //  ③ 인라인 style 의 animation/transform 류 속성을 새니타이즈한다.
+  //  따라서 검증된 레퍼런스와 100% 동일하게, 막대를 블록 요소 <div> 로 만들고
+  //  모양/높이/딜레이/애니메이션은 전부 <style> 의 "클래스"로 정의하며,
+  //  각 막대에는 &nbsp; 내용을 넣어 에디터 왕복에도 클래스/요소가 모두 살아남게 한다.)
   const eqColor = v.accent;
-  const eqBars = [
-    { h: 5,  delay: 0.00 },
-    { h: 11, delay: 0.18 },
-    { h: 7,  delay: 0.36 },
-    { h: 13, delay: 0.09 },
-    { h: 5,  delay: 0.27 },
-  ];
-  const eqHtml = `<span style="display:inline-flex;align-items:flex-end;gap:3px;height:14px;vertical-align:middle;">${eqBars.map(b=>`<span class="la-eq-bar" style="display:inline-block;width:3px;height:${b.h}px;background:${eqColor};border-radius:2px 2px 0 0;transform-origin:bottom;animation:la-eq-pulse 0.9s ease-in-out ${b.delay}s infinite alternate;"></span>`).join('')}</span>`;
+  const eqHtml = `<div class="la-eq">
+<div class="la-eq-bar">&nbsp;</div>
+<div class="la-eq-bar">&nbsp;</div>
+<div class="la-eq-bar">&nbsp;</div>
+<div class="la-eq-bar">&nbsp;</div>
+<div class="la-eq-bar">&nbsp;</div>
+</div>`;
 
   const playTable = `
 <table style="margin-top: 24px; width: 100%; border-collapse: collapse; border: 0; border-spacing: 0;" data-ke-align="alignLeft">
@@ -932,9 +935,20 @@ ${tagsHTML}${bodyHTML}
 <div style="font-size: 12px; line-height: 1.2;"><span style="font-size: 12px;">${footerTextA}</span></div>
 </div>` : '';
 
-  // <style> 블록을 출력 최상단에 함께 emit — 티스토리는 본문 내 <style> 허용
-  // (참고: 사용자가 제공한 검증된 레퍼런스도 동일한 방식을 사용해 정상 동작 확인됨)
-  const styleBlock = `<style>@keyframes la-eq-pulse{from{transform:scaleY(0.35)}to{transform:scaleY(1)}}</style>`;
+  // <style> 블록을 출력 최상단에 함께 emit — 티스토리는 본문 내 <style> 허용.
+  // 검증된 레퍼런스와 동일하게 막대 형태/높이/딜레이/애니메이션을 모두 "클래스"로
+  // 정의한다. (인라인 animation 은 에디터 전환 시 사라지지만, <style> 클래스는 살아남음)
+  // div 한 겹으로 감싸는 것도 레퍼런스와 동일한 형태.
+  const styleBlock = `<div><style>
+.la-eq{display:flex;align-items:flex-end;gap:3px;height:14px;}
+.la-eq-bar{width:3px;background:${eqColor};border-radius:2px 2px 0 0;transform-origin:bottom;animation:la-eq-pulse 0.9s ease-in-out infinite alternate;}
+.la-eq-bar:nth-child(1){height:5px;animation-delay:0s;}
+.la-eq-bar:nth-child(2){height:11px;animation-delay:0.18s;}
+.la-eq-bar:nth-child(3){height:7px;animation-delay:0.36s;}
+.la-eq-bar:nth-child(4){height:13px;animation-delay:0.09s;}
+.la-eq-bar:nth-child(5){height:5px;animation-delay:0.27s;}
+@keyframes la-eq-pulse{from{transform:scaleY(0.35)}to{transform:scaleY(1)}}
+</style></div>`;
 
   return `${styleBlock}${thumbImg}\n<div style="max-width: ${mw}px; margin: 0 auto; padding: 0; font-family: ${font}; color: ${v.text}; background-color: ${v.outerBg}; border-radius: 14px;">
 <div style="border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
