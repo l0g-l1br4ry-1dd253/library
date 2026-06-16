@@ -168,7 +168,7 @@
 
 <header>
   <h1>LOG LIBRARY</h1>
-  <p class="header-sub">Last Updated &middot; June 2, 2026</p>
+  <p class="header-sub">Last Updated &middot; June 16, 2026</p>
 </header>
 
 <main>
@@ -427,41 +427,48 @@ const THEMES = {
     muted:'#9ab5d9',
     title:'#e5f5ff', subtitle:'#ffffff', char:'#e5f5ff'
   },
-  Love: {
-    outerBg:'#ffdbdf', card:'#ffffff', text:'#2a1f22',
-    hl:'#ffd6e0', hl2:'#ffe4eb',
-    accent:'#941047', accentText:'#ffffff',
-    muted:'#941047',
-    title:'#ffffff', subtitle:'#ffffff', char:'#ffffff'
+  Lime: {
+    outerBg:'#edf6d8', card:'#ffffff', text:'#000000',
+    hl:'#b2eee4', hl2:'#ddf6f1',
+    accent:'#fdf4af', accentText:'#1f3a16',
+    muted:'#4f998b',
+    title:'#ffffff', subtitle:'#edf6d8', char:'#edf6d8'
   },
   // ── New themes from external palettes ──
   'Old Money Dark': {
-    outerBg:'#141e23', card:'#1f2a31', text:'#a08e6c',
-    hl:'#192228', hl2:'#243038',
+    outerBg:'#141e23', card:'#1f2a31', text:'#f1ebdd',
+    hl:'#bf9f6f', hl2:'#d8c49a', playBg:'#192228',
     accent:'#bf9f6f', accentText:'#141e23',
     muted:'#a89070',
     title:'#bf9f6f', subtitle:'#a89070', char:'#a89070'
   },
   'Old Money Light': {
-    outerBg:'#efe9da', card:'#fbf8ef', text:'#574d34',
-    hl:'#f0e9d4', hl2:'#f5efde',
-    accent:'#923838', accentText:'#fbf8ef',
-    muted:'#8b7355',
-    title:'#ffffff', subtitle:'#f7f3e8', char:'#f7f3e8'
+    outerBg:'#d6c7b2', card:'#f4eee1', text:'#000000',
+    hl:'#e5d8b8', hl2:'#eee6d2',
+    accent:'#923838', accentText:'#f4eee1',
+    muted:'#7a6647',
+    title:'#ffffff', subtitle:'#f4eee1', char:'#f4eee1'
   },
   Chocolate: {
-    outerBg:'#fcfaf8', card:'#ffffff', text:'#4d3a2a',
+    outerBg:'#fcfaf8', card:'#ffffff', text:'#000000',
     hl:'#f2ebe3', hl2:'#f7f4f0',
     accent:'#3d2515', accentText:'#fcfaf8',
     muted:'#aa7550',
     title:'#ffffff', subtitle:'#fcfaf8', char:'#fcfaf8'
   },
-  Espresso: {
-    outerBg:'#faf8f6', card:'#ffffff', text:'#4a3d35',
-    hl:'#efe8e0', hl2:'#f5f2ee',
-    accent:'#3a2920', accentText:'#faf8f6',
-    muted:'#9a7f60',
-    title:'#ffffff', subtitle:'#faf8f6', char:'#faf8f6'
+  Peony: {
+    outerBg:'#fbf0f2', card:'#ffffff', text:'#3e2723',
+    hl:'#f4c9d6', hl2:'#fbe7ec',
+    accent:'#9d3f5b', accentText:'#fbf0f2',
+    muted:'#a8788a',
+    title:'#ffffff', subtitle:'#fbf0f2', char:'#fbf0f2'
+  },
+  Beach: {
+    outerBg:'#e4d8c7', card:'#ffffff', text:'#000000',
+    hl:'#c4dce7', hl2:'#d3e6ee',
+    accent:'#81a6c6', accentText:'#0e2c44',
+    muted:'#4f7491',
+    title:'#ffffff', subtitle:'#f3e3d0', char:'#f3e3d0'
   },
 };
 const THEME_KEYS = ['outerBg','card','text','hl','hl2','accent','accentText','muted','title','subtitle','char'];
@@ -628,13 +635,14 @@ function processInline(text, v){
   h = h.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
   // 5) Italic *text*
   h = h.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<em>$2</em>');
+  const diaInk = readableInk(v.hl, v.text);
   // 6) Dialog — DOUBLE quotes (straight)  "..."
   h = h.replace(/&quot;((?:(?!&quot;).)+?)&quot;/g, (_m, inner)=>{
-    return `<span data-dia="1" style="background-color:${v.hl};color:${v.text};padding:0 6px;border-radius:4px;">&quot;${inner}&quot;</span>`;
+    return `<span data-dia="1" style="background-color:${v.hl};color:${diaInk};padding:0 6px;border-radius:4px;">&quot;${inner}&quot;</span>`;
   });
   // 7) Dialog — DOUBLE quotes (curly)  "..."
   h = h.replace(/&#8220;((?:(?!&#8221;).)+?)&#8221;/g, (_m, inner)=>{
-    return `<span data-dia="1" style="background-color:${v.hl};color:${v.text};padding:0 6px;border-radius:4px;">&#8220;${inner}&#8221;</span>`;
+    return `<span data-dia="1" style="background-color:${v.hl};color:${diaInk};padding:0 6px;border-radius:4px;">&#8220;${inner}&#8221;</span>`;
   });
   // 8) Inner thought — SINGLE quotes (straight)  '...'
   //    Open ': must NOT be preceded by an English letter/digit/underscore
@@ -644,12 +652,13 @@ function processInline(text, v){
   //                — Korean particles (이, 을, 는, 라고…) are OK
   //                  English contractions are blocked.
   const softHl = v.hl2 || hexToRgba(v.hl, 0.5);
+  const thoughtInk = readableInk(v.hl2 || v.hl, v.text);
   h = h.replace(/(^|[^A-Za-z0-9_])&#39;((?:(?!&#39;)[^\n])+?)&#39;(?![A-Za-z0-9_])/g, (_m, before, inner)=>{
-    return `${before}<span data-dia="2" style="background-color:${softHl};color:${v.text};padding:0 6px;border-radius:4px;">&#39;${inner}&#39;</span>`;
+    return `${before}<span data-dia="2" style="background-color:${softHl};color:${thoughtInk};padding:0 6px;border-radius:4px;">&#39;${inner}&#39;</span>`;
   });
   // 9) Inner thought — SINGLE quotes (curly)  '...'
   h = h.replace(/&#8216;((?:(?!&#8217;).)+?)&#8217;/g, (_m, inner)=>{
-    return `<span data-dia="2" style="background-color:${softHl};color:${v.text};padding:0 6px;border-radius:4px;">&#8216;${inner}&#8217;</span>`;
+    return `<span data-dia="2" style="background-color:${softHl};color:${thoughtInk};padding:0 6px;border-radius:4px;">&#8216;${inner}&#8217;</span>`;
   });
   // 10) Line breaks within paragraph
   h = h.replace(/\n/g, '<br>');
@@ -659,6 +668,7 @@ function processInline(text, v){
 function buildHTML(){
   const v = state.themeVars;
   const T = state.type; // 'A' | 'B'
+  const blockInk = readableInk(v.hl, v.text);
 
   // ---- Common fields ----
   const title     = $('f-title').value || '';
@@ -834,7 +844,7 @@ function buildHTML(){
 
     // B-type card (catalog): no overlap, margin-top:18px, lighter shadow, more padding
     const tagsHTML = tags.length ? `<div style="margin:0 0 16px 0;">
-${tags.map(t=>`<span style="display:inline-block;padding:3px 10px;margin:0 4px 4px 0;border-radius:999px;background:${v.hl};color:${v.text};font-size:11px;letter-spacing:0.06em;" data-dia="1">${escapeHtml(t)}</span>`).join('')}
+${tags.map(t=>`<span style="display:inline-block;padding:3px 10px;margin:0 4px 4px 0;border-radius:999px;background:${v.hl};color:${blockInk};font-size:11px;letter-spacing:0.06em;" data-dia="1">${escapeHtml(t)}</span>`).join('')}
 </div>` : '';
 
     const cardBlock = `
@@ -904,7 +914,7 @@ ${footer}
 <div style="display: inline-block; word-break: keep-all; padding: 6px 14px; border-radius: 999px; background-color: ${v.accent}; color: ${v.accentText}; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; box-shadow: 0 3px 10px rgba(0,0,0,0.3); white-space: nowrap; line-height: 1;">&#9654;</div>
 </td>
 <td style="padding: 0; vertical-align: middle; border: 0;">
-<div style="display: inline-block; word-break: keep-all; padding: 6px 14px; border-radius: 999px; background-color: ${v.hl}; color: ${v.muted}; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid ${hexToRgba(v.muted,0.2)}; margin-left: 6px; white-space: nowrap; line-height: 1;">&#10074;&#10074;</div>
+<div style="display: inline-block; word-break: keep-all; padding: 6px 14px; border-radius: 999px; background-color: ${v.playBg || v.hl}; color: ${readableInk(v.playBg || v.hl, v.muted)}; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; border: 1px solid ${hexToRgba(v.muted,0.2)}; margin-left: 6px; white-space: nowrap; line-height: 1;">&#10074;&#10074;</div>
 </td>
 <td style="padding: 0 0 0 14px; vertical-align: middle; width: 100%; border: 0; text-align: left;">
 ${eqHtml}
@@ -927,7 +937,7 @@ ${playTable}
 </div>`;
 
   const tagsHTML = tags.length ? `<div style="margin: 0 0 14px 0;">
-${tags.map(t=>`<span style="display:inline-block; padding:3px 10px; margin:0 4px 4px 0; border-radius:999px; background:${v.hl}; color:${v.text}; font-size:11px; letter-spacing:0.06em;" data-dia="1">${escapeHtml(t)}</span>`).join('')}
+${tags.map(t=>`<span style="display:inline-block; padding:3px 10px; margin:0 4px 4px 0; border-radius:999px; background:${v.hl}; color:${blockInk}; font-size:11px; letter-spacing:0.06em;" data-dia="1">${escapeHtml(t)}</span>`).join('')}
 </div>` : '';
 
   const cardBlockB = `
@@ -988,6 +998,32 @@ function hexToRgba(hex, alpha){
   const g = parseInt(full.substring(2,4),16);
   const b = parseInt(full.substring(4,6),16);
   return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/* Relative luminance (WCAG) from a hex color. Returns 0.5 for unparseable. */
+function relLuminance(hex){
+  if(!hex || typeof hex !== 'string' || hex[0] !== '#') return 0.5;
+  let h = hex.replace('#','');
+  if(h.length===3) h = h.split('').map(c=>c+c).join('');
+  if(h.length!==6) return 0.5;
+  const toLin = (c)=>{ c/=255; return c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055,2.4); };
+  const r = toLin(parseInt(h.substring(0,2),16));
+  const g = toLin(parseInt(h.substring(2,4),16));
+  const b = toLin(parseInt(h.substring(4,6),16));
+  if([r,g,b].some(Number.isNaN)) return 0.5;
+  return 0.2126*r + 0.7152*g + 0.0722*b;
+}
+function contrastRatio(a,b){
+  const la = relLuminance(a), lb = relLuminance(b);
+  const hi = Math.max(la,lb), lo = Math.min(la,lb);
+  return (hi+0.05)/(lo+0.05);
+}
+/* Keep the theme's text color on a block if it reads well; otherwise fall
+   back to a dark or light ink chosen by the block's own brightness. */
+function readableInk(bgHex, preferred){
+  if(preferred && contrastRatio(bgHex, preferred) >= 3.5) return preferred;
+  const dark = '#1f1a14', light = '#f4f1ea';
+  return contrastRatio(bgHex, dark) >= contrastRatio(bgHex, light) ? dark : light;
 }
 
 /* ---------- RENDER ---------- */
