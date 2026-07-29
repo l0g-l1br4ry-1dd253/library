@@ -118,11 +118,11 @@
   .theme-chip{
     padding:9px 8px; border-radius:999px; border:1px solid var(--line);
     background:#0a0907; color:var(--ink-dim);
-    font-size:12px; letter-spacing:.08em; cursor:pointer; text-align:center;
-    transition:.2s ease;
+    font-size:12px; letter-spacing:.06em; cursor:pointer; text-align:center;
+    transition:transform .15s ease, box-shadow .2s ease, filter .2s ease;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .theme-chip:hover{border-color:var(--accent-soft); color:var(--ink)}
-  .theme-chip.active{background:var(--ink); color:#1a1612; border-color:var(--ink)}
+  .theme-chip:hover{transform:translateY(-1px); filter:brightness(1.06)}
 
   /* preview / output */
   .preview-wrap{padding:18px}
@@ -168,7 +168,7 @@
 
 <header>
   <h1>LOG LIBRARY</h1>
-  <p class="header-sub">Last Updated &middot; June 16, 2026</p>
+  <p class="header-sub">Last Updated &middot; July 29, 2026</p>
 </header>
 
 <main>
@@ -368,9 +368,6 @@ const $ = (id) => document.getElementById(id);
                   muted, title, subtitle, char)
    ============================================================ */
 const THEMES = {
-  // ── Real values from Log Atelier export ──
-  // hl  = "큰따옴표" 강조 배경
-  // hl2 = '작은따옴표' 강조 배경 (hl보다 옅게 — 카드 배경에 더 가까운 색)
   Default: {
     outerBg:'#faf9f7', card:'#ffffff', text:'#1c1b1a',
     hl:'#e6e6e6', hl2:'#efefef',
@@ -378,12 +375,13 @@ const THEMES = {
     muted:'#6b635e',
     title:'#ffffff', subtitle:'#ffffff', char:'#ffffff'
   },
+  // Dry Sage / Beige / Cornsilk / Papaya Whip / Light Bronze 팔레트
   Sage: {
-    outerBg:'#edeeeb', card:'#ffffff', text:'#232a25',
-    hl:'#d0ddd5', hl2:'#e0e9e4',
-    accent:'#232a25', accentText:'#ffffff',
-    muted:'#646d67',
-    title:'#ffffff', subtitle:'#ffffff', char:'#ffffff'
+    outerBg:'#fefae0', card:'#ffffff', text:'#1c1b1a',
+    hl:'#ccd5ae', hl2:'#dbe1bc',
+    accent:'#d4a373', accentText:'#fefae0',
+    muted:'#a1764a',
+    title:'#fefae0', subtitle:'#faedcd', char:'#faedcd'
   },
   Rose: {
     outerBg:'#efe7e8', card:'#ffffff', text:'#2a1f22',
@@ -401,7 +399,7 @@ const THEMES = {
   },
   Noir: {
     outerBg:'#1a1816', card:'#222020', text:'#e8e6e1',
-    hl:'#3d3934', hl2:'#2f2c28',
+    hl:'#4c4843', hl2:'#3e3b37',
     accent:'#b9a981', accentText:'#1a1612',
     muted:'#8a8278',
     title:'#ffffff', subtitle:'#e8e6e1', char:'#d9c89c'
@@ -434,7 +432,6 @@ const THEMES = {
     muted:'#4f998b',
     title:'#ffffff', subtitle:'#edf6d8', char:'#edf6d8'
   },
-  // ── New themes from external palettes ──
   'Old Money Dark': {
     outerBg:'#141e23', card:'#1f2a31', text:'#f1ebdd',
     hl:'#bf9f6f', hl2:'#d8c49a', playBg:'#192228',
@@ -503,12 +500,42 @@ $('typeToggle').addEventListener('click', (e)=>{
   render();
 });
 
+/* ---------- THEME CHIP PAINTING ----------
+   각 버튼을 해당 테마의 실제 색으로 칠한다.
+   - 비선택: 테마의 outerBg 배경 + 대비 좋은 글자색 + accent 테두리
+   - 선택:   테마의 accent 배경 + accentText 글자색            */
+function paintChip(chip, t, active){
+  const bg = active ? t.accent : t.outerBg;
+  const fg = active
+    ? readableInk(bg, t.accentText)
+    : readableInk(bg, t.text);
+  chip.style.background   = bg;
+  chip.style.color        = fg;
+  chip.style.borderColor  = active ? hexToRgba(fg, 0.55) : t.accent;
+  chip.style.borderWidth  = active ? '2px' : '1.5px';
+  chip.style.borderStyle  = 'solid';
+  chip.style.fontWeight   = active ? '700' : '500';
+  chip.style.boxShadow    = active
+    ? '0 0 0 2px rgba(217,200,156,.55), 0 4px 14px rgba(0,0,0,.45)'
+    : '0 1px 4px rgba(0,0,0,.35)';
+}
+function repaintChips(){
+  document.querySelectorAll('.theme-chip').forEach(c=>{
+    const t = THEMES[c.dataset.theme];
+    if(t) paintChip(c, t, c.dataset.theme === state.theme);
+  });
+}
+
 /* ---------- THEMES UI ---------- */
 const themeGrid = $('themeGrid');
 Object.keys(THEMES).forEach(name=>{
+  const t = THEMES[name];
   const chip = document.createElement('div');
-  chip.className = 'theme-chip' + (name===state.theme?' active':'');
+  chip.className = 'theme-chip';
+  chip.dataset.theme = name;
   chip.textContent = name;
+  chip.title = name;
+  paintChip(chip, t, name === state.theme);
   chip.addEventListener('click', ()=>{
     state.theme = name;
     state.themeVars = {...THEMES[name]};
@@ -516,7 +543,7 @@ Object.keys(THEMES).forEach(name=>{
       const el = $('t-'+k); if(el){ el.value = state.themeVars[k]; }
       const lbl = $('t-'+k+'-v'); if(lbl){ lbl.textContent = state.themeVars[k]; }
     }
-    document.querySelectorAll('.theme-chip').forEach(c=>c.classList.toggle('active', c===chip));
+    repaintChips();
     render();
   });
   themeGrid.appendChild(chip);
@@ -542,10 +569,6 @@ document.querySelectorAll('input, select, textarea').forEach(el=>{
 
 /* ============================================================
    Smart-quote & ellipsis auto-convert for the body textarea.
-   - "  → curly “ ”  based on context (open after space/start/punct, close otherwise)
-   - '  → curly ‘ ’  same rule, but apostrophes inside English words stay straight
-   - ... → …
-   IME-safe: pauses during Korean composition; ignored when toggle off.
    ============================================================ */
 (()=>{
   const ta = $('f-body');
@@ -562,13 +585,10 @@ document.querySelectorAll('input, select, textarea').forEach(el=>{
     const value = ta.value;
     const caret = ta.selectionStart;
 
-    // We rebuild the string char-by-char so we can map the caret position.
     let out = '';
     let newCaret = caret;
     const isWord = (ch)=> /[A-Za-z0-9]/.test(ch || '');
     const opensAfter = (ch)=>{
-      // What kind of char appears immediately before the quote?
-      // If start-of-string, whitespace, or opening punctuation → use opening quote.
       if (!ch) return true;
       return /[\s(\[\{<—\-]/.test(ch);
     };
@@ -577,7 +597,6 @@ document.querySelectorAll('input, select, textarea').forEach(el=>{
     while (i < value.length){
       const ch = value[i];
       const prevOut = out.length ? out[out.length - 1] : '';
-      // Triple dots → ellipsis
       if (ch === '.' && value[i+1] === '.' && value[i+2] === '.'){
         out += '\u2026';
         if (caret > i + 2) newCaret -= 2;
@@ -591,10 +610,9 @@ document.querySelectorAll('input, select, textarea').forEach(el=>{
         continue;
       }
       if (ch === "'"){
-        // If between two word chars → apostrophe ' (don't, it's)
         const next = value[i+1] || '';
         if (isWord(prevOut) && isWord(next)){
-          out += '\u2019'; // typographic apostrophe
+          out += '\u2019';
         } else {
           out += opensAfter(prevOut) ? '\u2018' : '\u2019';
         }
@@ -610,7 +628,6 @@ document.querySelectorAll('input, select, textarea').forEach(el=>{
       ta.value = out;
       const newPos = Math.min(out.length, Math.max(0, caret + delta));
       try{ ta.setSelectionRange(newPos, newPos); }catch(e){}
-      // re-render preview after substitution
       render();
     }
   }
@@ -626,48 +643,32 @@ function escapeHtml(s){
 }
 
 function processInline(text, v){
-  // 1) Escape HTML (including " → &quot; and ' → &#39;)
   let h = text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-  // 2) Convert curly quotes to numeric entities
   h = h.replace(/\u201C/g, '&#8220;').replace(/\u201D/g, '&#8221;');
   h = h.replace(/\u2018/g, '&#8216;').replace(/\u2019/g, '&#8217;');
-  // 3) Bold + italic ***text***
   h = h.replace(/\*\*\*([^*\n]+?)\*\*\*/g, '<b><i>$1</i></b>');
-  // 4) Bold **text**
   h = h.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
-  // 5) Italic *text*
   h = h.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<em>$2</em>');
   const diaInk = readableInk(v.hl, v.text);
-  // 6) Dialog — DOUBLE quotes (straight)  "..."
   h = h.replace(/&quot;((?:(?!&quot;).)+?)&quot;/g, (_m, inner)=>{
     return `<span data-dia="1" style="background-color:${v.hl};color:${diaInk};padding:0 6px;border-radius:4px;">&quot;${inner}&quot;</span>`;
   });
-  // 7) Dialog — DOUBLE quotes (curly)  "..."
   h = h.replace(/&#8220;((?:(?!&#8221;).)+?)&#8221;/g, (_m, inner)=>{
     return `<span data-dia="1" style="background-color:${v.hl};color:${diaInk};padding:0 6px;border-radius:4px;">&#8220;${inner}&#8221;</span>`;
   });
-  // 8) Inner thought — SINGLE quotes (straight)  '...'
-  //    Open ': must NOT be preceded by an English letter/digit/underscore
-  //                — blocks "it's", "don't", "cat's"
-  //                  but ALLOWS Korean (e.g. 한글 바로 뒤의 ')
-  //    Close ': must NOT be followed by an English letter/digit
-  //                — Korean particles (이, 을, 는, 라고…) are OK
-  //                  English contractions are blocked.
   const softHl = v.hl2 || hexToRgba(v.hl, 0.5);
   const thoughtInk = readableInk(v.hl2 || v.hl, v.text);
   h = h.replace(/(^|[^A-Za-z0-9_])&#39;((?:(?!&#39;)[^\n])+?)&#39;(?![A-Za-z0-9_])/g, (_m, before, inner)=>{
     return `${before}<span data-dia="2" style="background-color:${softHl};color:${thoughtInk};padding:0 6px;border-radius:4px;">&#39;${inner}&#39;</span>`;
   });
-  // 9) Inner thought — SINGLE quotes (curly)  '...'
   h = h.replace(/&#8216;((?:(?!&#8217;).)+?)&#8217;/g, (_m, inner)=>{
     return `<span data-dia="2" style="background-color:${softHl};color:${thoughtInk};padding:0 6px;border-radius:4px;">&#8216;${inner}&#8217;</span>`;
   });
-  // 10) Line breaks within paragraph
   h = h.replace(/\n/g, '<br>');
   return h;
 }
@@ -677,7 +678,6 @@ function buildHTML(){
   const T = state.type; // 'A' | 'B'
   const blockInk = readableInk(v.hl, v.text);
 
-  // ---- Common fields ----
   const title     = $('f-title').value || '';
   const character = $('f-character').value || '';
   const author    = $('f-author').value || '';
@@ -685,7 +685,6 @@ function buildHTML(){
   const tags      = tagsRaw ? tagsRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
   const subtitle  = $('f-subtitle').value || '';
 
-  // Hero
   const useHero = $('f-usehero').checked;
   const img     = $('f-img').value || '';
   const fx      = parseInt($('f-fx').value || 50, 10);
@@ -693,16 +692,13 @@ function buildHTML(){
   const hh      = parseInt($('f-hheight').value || 350, 10);
   const tpos    = $('f-tpos').value;
 
-  // A meta
   const promptName = ($('f-prompt').value || '').trim();
   const modelName  = ($('f-model').value || '').trim();
   const botLink    = ($('f-link').value || '').trim();
 
-  // B
   const progressEl = $('f-progress');
   const progress = progressEl ? Math.min(100, Math.max(0, parseInt(progressEl.value || 0, 10))) : 0;
 
-  // Layout
   const mw    = parseInt($('f-mw').value || 650, 10);
   const fs    = parseFloat($('f-fs').value || 16);
   const lh    = parseFloat($('f-lh').value || 2);
@@ -712,12 +708,6 @@ function buildHTML(){
   const justify = $('f-justify').checked;
   const overlayDark = parseFloat($('t-overlayDark') ? ($('t-overlayDark').value || 0.5) : 0.5);
 
-  // ---- Hero shared ----
-  // tpos now controls the HORIZONTAL alignment of the title cluster only
-  // (3 lines: by Author / Title / Character Name).
-  // Vertical alignment is fixed (middle) so subtitle & playbar stay put.
-  // Backwards-compat: old saved presets may still hold top/middle/bottom — fall
-  // back to 'left' in that case.
   const validAlign = (tpos === 'center' || tpos === 'right') ? tpos : 'left';
   const overlayGrad = `linear-gradient(to top,rgba(0,0,0,${overlayDark}),rgba(0,0,0,${(overlayDark*0.3).toFixed(2)}),rgba(0,0,0,${(overlayDark*0.12).toFixed(2)}))`;
   const heroBgRule = (useHero && img)
@@ -727,36 +717,24 @@ function buildHTML(){
     ? `<div style="font-size:13px;letter-spacing:0.08em;text-align:${validAlign};">by <span style="font-weight:600;">${escapeHtml(author.toUpperCase())}</span></div>`
     : '';
 
-  // ---- Hidden thumbnail (for board auto-thumb extraction) ----
   const thumbImg = (useHero && img)
     ? `<p><img style="width: 0px; height: 0px;" src="${img}" class="fr-fic fr-dii"></p>`
     : '';
 
-  // ---- Message bubble helper ----
-  // [[content HH:MM name]]   → SENT  (blue, right-tail)
-  // [[[content HH:MM name]]] → RECEIVED (gray, left-tail)
-  // Both rendered centered on the page; the bubble's missing rounded corner
-  // (bottom-right vs bottom-left) shows the speaker side, like iMessage.
   function renderBubble(raw, kind){
-    // raw = inside the brackets. Split on whitespace.
-    // Expect: <message words...> <HH:MM> <name>
     const tokens = raw.trim().split(/\s+/);
     let time = '', name = '', message = raw.trim();
-    // Find a HH:MM token from the end
     const timeRe = /^\d{1,2}:\d{2}$/;
-    // Try the standard: last token = name, second-to-last = time
     if (tokens.length >= 3 && timeRe.test(tokens[tokens.length - 2])){
       name = tokens[tokens.length - 1];
       time = tokens[tokens.length - 2];
       message = tokens.slice(0, tokens.length - 2).join(' ');
     }
-    // Fallback: maybe just time + name with no message (rare)
     else if (tokens.length === 2 && timeRe.test(tokens[0])){
       time = tokens[0];
       name = tokens[1];
       message = '';
     }
-    // Process message inline (so **bold**, "dialog" etc. work inside bubbles)
     const messageHTML = message ? processInline(message, v) : '';
 
     const isSent = (kind === 'sent');
@@ -766,7 +744,6 @@ function buildHTML(){
       ? 'border-bottom-right-radius: 0'
       : 'border-bottom-left-radius: 0';
 
-    // 메시지는 본문 폰트와 무관하게 항상 Noto Sans (고딕) 으로 고정
     const msgFont = "'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif";
     return `<div style="margin-bottom: 15px; text-align: center; font-family: ${msgFont};">
 <div style="font-size: 10.5px; color: #888; margin-bottom: 5px; font-family: ${msgFont};">${escapeHtml(time)}</div>
@@ -777,30 +754,24 @@ function buildHTML(){
 </div>`;
   }
 
-  // ---- Body paragraphs (format differs slightly between A and B) ----
   const raw = $('f-body').value || '';
   const blocks = raw.split(/\n{2,}/);
 
   let pStyle, spacer;
   if (T === 'B'){
-    // B (catalog): tighter style, no data-ke-size
     pStyle = `margin:0;line-height:${lh};letter-spacing:${ls}px;font-size:${fs}px;text-indent:${indent?'1em':'0'}${justify?';text-align:justify':''}`;
     spacer = `<p><br></p>`;
   } else {
-    // A (narrative log): kakao-editor-style attrs, justified by default
     pStyle = `margin: 0px; line-height: ${lh}; letter-spacing: ${ls}px; font-size: ${fs}px; text-indent: ${indent?'1em':'0px'}; text-align: ${justify?'justify':'left'};`;
     spacer = `<p style="text-align: ${justify?'justify':'left'};" data-ke-size="size16">&nbsp;</p>`;
   }
 
-  // Regexes for message-bubble blocks. Triple FIRST (so [[[...]]] isn't
-  // mistaken for [[...]]). Each must occupy the whole trimmed line.
   const tripleRe = /^\[\[\[([\s\S]+?)\]\]\]$/;
   const doubleRe = /^\[\[([\s\S]+?)\]\]$/;
 
   const paragraphHTMLs = blocks.map(b=>{
     const trimmed = b.trim();
     if (!trimmed) return '';
-    // Message bubbles override paragraph rendering
     const triple = trimmed.match(tripleRe);
     if (triple) return renderBubble(triple[1], 'received');
     const double = trimmed.match(doubleRe);
@@ -816,8 +787,7 @@ function buildHTML(){
   const bodyHTML = paragraphHTMLs.join('\n' + spacer + '\n');
 
   // ===================================================================
-  //  B TYPE  ──  Hero (slim) → Floating Meta Bar (-54px overlap) → Card
-  //              (formerly A — bot catalog / character intro)
+  //  B TYPE
   // ===================================================================
   if (T === 'B'){
     const heroBlock = `
@@ -831,7 +801,6 @@ function buildHTML(){
       </div>
     </div>`;
 
-    // Floating meta bar — dark translucent
     const metaParts = [];
     if (modelName)  metaParts.push(`<span style="margin-right:10px;color:#ffffff;">${escapeHtml(modelName)}</span>`);
     else            metaParts.push(`<span style="margin-right:10px;color:#ffffff;">Model</span>`);
@@ -849,7 +818,6 @@ function buildHTML(){
     </div>
   </div>`;
 
-    // B-type card (catalog): no overlap, margin-top:18px, lighter shadow, more padding
     const tagsHTML = tags.length ? `<div style="margin:0 0 16px 0;">
 ${tags.map(t=>`<span style="display:inline-block;padding:3px 10px;margin:0 4px 4px 0;border-radius:999px;background:${v.hl};color:${blockInk};font-size:11px;letter-spacing:0.06em;" data-dia="1">${escapeHtml(t)}</span>`).join('')}
 </div>` : '';
@@ -881,26 +849,13 @@ ${footer}
   }
 
   // ===================================================================
-  //  A TYPE  ──  Hero (with subtitle + play bar) → Card (-45px overlap)
-  //              (formerly B — narrative log / story post)
+  //  A TYPE
   // ===================================================================
   const subtitleLine = subtitle
     ? `<br /><div style="font-size: 13px; line-height: 1.6; letter-spacing: -0.4px; color: ${v.subtitle}; text-align: ${validAlign};">${subtitle}</div>`
     : '';
 
-  // EQ bars — 5 vertical bars that pulse via CSS @keyframes.
-  // (티스토리 에디터는 HTML→에디터 전환 시 ① 내용이 비어 있는 인라인 <span> 을 삭제하고
-  //  ② 인라인 <span> 에 붙은 class 를 텍스트 서식용으로 보고 떼어내며
-  //  ③ 인라인 style 의 animation/transform 류 속성을 새니타이즈한다.
-  //  따라서 검증된 레퍼런스와 100% 동일하게, 막대를 블록 요소 <div> 로 만들고
-  //  모양/높이/딜레이/애니메이션은 전부 <style> 의 "클래스"로 정의하며,
-  //  각 막대에는 &nbsp; 내용을 넣어 에디터 왕복에도 클래스/요소가 모두 살아남게 한다.)
   const eqColor = v.accent;
-  // 같은 페이지(티스토리 목록/다중 포스팅)에 서로 다른 프리셋의 A타입 로그가
-  // 섞이면, 공용 class(.la-eq-bar) 가 전역에서 충돌해 막대 색이 한 프리셋으로
-  // 통일돼 버린다. 이를 막기 위해 accent 색을 기반으로 고유 토큰을 만들어
-  // class / keyframe 이름에 붙여 각 포스팅의 막대 스타일을 격리한다.
-  // (같은 색이면 토큰도 같아져 자연스럽게 공유 — 색이 다르면 절대 충돌 안 함)
   const eqUid  = eqToken(eqColor);
   const eqWrap = `la-eq-${eqUid}`;
   const eqBar  = `la-eq-bar-${eqUid}`;
@@ -961,10 +916,6 @@ ${tagsHTML}${bodyHTML}
 <div style="font-size: 12px; line-height: 1.2;"><span style="font-size: 12px;">${footerTextA}</span></div>
 </div>` : '';
 
-  // <style> 블록을 출력 최상단에 함께 emit — 티스토리는 본문 내 <style> 허용.
-  // 검증된 레퍼런스와 동일하게 막대 형태/높이/딜레이/애니메이션을 모두 "클래스"로
-  // 정의한다. (인라인 animation 은 에디터 전환 시 사라지지만, <style> 클래스는 살아남음)
-  // div 한 겹으로 감싸는 것도 레퍼런스와 동일한 형태.
   const styleBlock = `<div><style>
 .${eqWrap}{display:flex;align-items:flex-end;gap:3px;height:14px;}
 .${eqBar}{width:3px;background:${eqColor};border-radius:2px 2px 0 0;transform-origin:bottom;animation:${eqAnim} 0.9s ease-in-out infinite alternate;}
@@ -985,9 +936,6 @@ ${footerB}
 </div>`;
 }
 
-/* 색 문자열 → 짧은 고유 토큰 (EQ 막대 class/keyframe 격리용).
-   같은 색이면 같은 토큰, 다른 색이면 다른 토큰이 나와
-   여러 프리셋의 막대가 한 페이지에 섞여도 색이 충돌하지 않는다. */
 function eqToken(str){
   const s = String(str || '');
   let h = 5381;
@@ -995,7 +943,6 @@ function eqToken(str){
   return h.toString(36).slice(0,6) || '0';
 }
 
-/* hex → rgba helper (also passes through rgba/named values) */
 function hexToRgba(hex, alpha){
   if(!hex) return `rgba(0,0,0,${alpha})`;
   if(hex.startsWith('rgb')) return hex;
@@ -1007,7 +954,6 @@ function hexToRgba(hex, alpha){
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-/* Relative luminance (WCAG) from a hex color. Returns 0.5 for unparseable. */
 function relLuminance(hex){
   if(!hex || typeof hex !== 'string' || hex[0] !== '#') return 0.5;
   let h = hex.replace('#','');
@@ -1025,8 +971,6 @@ function contrastRatio(a,b){
   const hi = Math.max(la,lb), lo = Math.min(la,lb);
   return (hi+0.05)/(lo+0.05);
 }
-/* Keep the theme's text color on a block if it reads well; otherwise fall
-   back to a dark or light ink chosen by the block's own brightness. */
 function readableInk(bgHex, preferred){
   if(preferred && contrastRatio(bgHex, preferred) >= 3.5) return preferred;
   const dark = '#1f1a14', light = '#f4f1ea';
@@ -1070,29 +1014,22 @@ function snapshot(){
 function restore(snap){
   if(!snap || typeof snap !== 'object') return;
 
-  // 1) Type
   if(snap.type === 'A' || snap.type === 'B'){
     state.type = snap.type;
     for (const btn of $('typeToggle').children){
       btn.classList.toggle('active', btn.dataset.type===state.type);
     }
+    document.body.setAttribute('data-type', state.type);
   }
 
-  // 2) Theme name
   if(snap.theme){
     state.theme = snap.theme;
-    document.querySelectorAll('.theme-chip').forEach(c=>{
-      c.classList.toggle('active', c.textContent===state.theme);
-    });
   }
 
-  // 3) Theme variables — accept several locations
-  //    Priority: snap.vars  >  snap.themeVars  >  snap.fields[t-*]
   let vars = null;
   if (snap.vars && typeof snap.vars === 'object') vars = snap.vars;
   else if (snap.themeVars && typeof snap.themeVars === 'object') vars = snap.themeVars;
   else if (snap.fields){
-    // Reconstruct vars from t-* fields
     const reconstructed = {};
     let foundAny = false;
     for(const k of THEME_KEYS){
@@ -1104,9 +1041,7 @@ function restore(snap){
     if (foundAny) vars = reconstructed;
   }
   if (vars){
-    // Merge with current Default so missing keys don't break preview
     state.themeVars = { ...THEMES.Default, ...state.themeVars, ...vars };
-    // Sync color pickers + labels
     for (const k of THEME_KEYS){
       const el = $('t-'+k);
       if (el && state.themeVars[k] !== undefined){
@@ -1119,7 +1054,6 @@ function restore(snap){
     }
   }
 
-  // 4) Form fields (f-* and any other t-* that aren't in THEME_KEYS like t-overlayDark)
   if (snap.fields && typeof snap.fields === 'object'){
     for (const [id, val] of Object.entries(snap.fields)){
       const el = document.getElementById(id);
@@ -1129,12 +1063,12 @@ function restore(snap){
       } else {
         el.value = (val === null || val === undefined) ? '' : val;
       }
-      // Update any "-v" label that mirrors this input
       const lbl = $(id+'-v');
       if (lbl) lbl.textContent = (val === null || val === undefined) ? '' : val;
     }
   }
 
+  repaintChips();
   render();
 }
 function refreshPresetList(){
@@ -1181,7 +1115,6 @@ $('p-export').addEventListener('click', ()=>{
   }
 });
 $('p-import').addEventListener('click', ()=>{
-  // Create a real, attached file input so all browsers trigger the dialog
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.json,application/json';
@@ -1203,17 +1136,10 @@ $('p-import').addEventListener('click', ()=>{
         return;
       }
       try{
-        // Accept multiple shapes:
-        //  (1) full snapshot: { type, theme, vars, fields }
-        //  (2) legacy / partial: { vars: {...} }
-        //  (3) just fields: { fields: {...} }
-        //  (4) Log Atelier export: { outerBg, cardBg, textColor, hiColor, ... }
         let normalised;
-        // Detect Log Atelier original export format by its unique keys
         const isLogAtelierExport = snap && typeof snap === 'object' &&
           ('cardBg' in snap || 'textColor' in snap || 'hiColor' in snap || 'footerColor' in snap);
         if (isLogAtelierExport){
-          // Map Log Atelier keys → our internal keys
           const mapped = {};
           if (snap.outerBg !== undefined)            mapped.outerBg = snap.outerBg;
           if (snap.cardBg !== undefined)             mapped.card = snap.cardBg;
@@ -1254,6 +1180,7 @@ $('p-import').addEventListener('click', ()=>{
 
 refreshPresetList();
 document.body.setAttribute('data-type', state.type);
+repaintChips();
 render();
 </script>
 </body>
